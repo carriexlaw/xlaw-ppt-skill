@@ -15,7 +15,7 @@ node build.js                                     # 每页调用 scripts/layout.
 python ../../scripts/postfix.py deck.pptx deck.manifest.yaml              # 英文字体（a:latin）+ bullet 135% accent + 清多余 pPr；每次 build 后必跑
 python ../../scripts/contact_sheet.py deck.manifest.yaml --qa _qa
 python ../../scripts/render_deck.py deck.pptx
-python ../../scripts/validate_design.py deck.pptx deck.manifest.yaml     # 期望：M 0（W：C-22 系列页连续同档 ×3、末 2 页无轻页）
+python ../../scripts/validate_design.py deck.pptx deck.manifest.yaml     # 期望：M 0 / W 0
 python ../../scripts/roles.py deck.pptx deck.manifest.yaml               # 期望：通过
 ```
 

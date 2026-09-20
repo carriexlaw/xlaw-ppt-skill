@@ -215,10 +215,10 @@ pages:
     message: 客户验厂必须在 2027 Q3 完成
     pattern: horizontal-timeline
     focus: {object: 18 个月的落地路径, form: timeline, count: 1}
-    density: heavy
+    density: light
     container: none
     columns: "1"
-    g: 20.79
+    g: 19.59
     source_chars: 89
     contrast: strong
     title_pos: base

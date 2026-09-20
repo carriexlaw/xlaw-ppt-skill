@@ -498,12 +498,40 @@ class PageCtx:
 
     def element_count(self):
         # 以元素为单位（§3.4b：紧贴对合并成一个元素）；元素里只要有一个 countable 形状就计 1
+        #   - icon：作为要点符号或某个条目配图的 icon 与该条目合计 1 个，不单独计数（紧贴对已合并；
+        #     单独成元素的 icon 只要与某个非 icon 的计数元素同行或同列（投影重叠 ≥ 30%）就算它的配图）
+        #   - 并列组（S-06 的几何判定：同层、同角色、同上沿 / 中线、等间距，n ≥ 3）按 1 + n / 4 计，与 table 一致
         cnt = {id(s) for s in self.countable}
-        n = 0.0
-        for u in self.units():
-            ms = [s for s in u['shapes'] if id(s) in cnt]
-            if not ms:
+        ov = self.th['scale']['overlap']
+        us = [u for u in self.units() if any(id(s) in cnt for s in u['shapes'])]
+
+        def icon_only(u):
+            return all(s.role == 'icon' for s in u['shapes'])
+
+        def attached(u):
+            for v in us:
+                if v is u or icon_only(v) or v['layer'] is not u['layer']:
+                    continue
+                a, b = u['box'], v['box']
+                ox = min(a.right, b.right) - max(a.x, b.x)
+                oy = min(a.bottom, b.bottom) - max(a.y, b.y)
+                if ox >= ov * min(a.w, b.w) or oy >= ov * min(a.h, b.h):
+                    return True
+            return False
+        us = [u for u in us if not (icon_only(u) and attached(u))]
+        n, grouped = 0.0, set()
+        tol = self.th['scale']['align_tol']
+        for layer in [None] + self.containers:
+            rows = []
+            _align_edges([u for u in us if u['layer'] is layer], tol, rows_out=rows, keep_units=True)
+            for row in rows:
+                if len(row) >= 3:
+                    n += 1 + len(row) / 4
+                    grouped.update(id(u) for u in row)
+        for u in us:
+            if id(u) in grouped:
                 continue
+            ms = [s for s in u['shapes'] if id(s) in cnt]
             n += max((1 + s.n_rows / 4) if s.is_table else 1 for s in ms)
         return n
 
@@ -616,8 +644,8 @@ class PageCtx:
                         best_v = (g, 'v', ua['shapes'][0], ub['shapes'][0], None, None, alt)
                 o2 = min(ai.bottom, bi.bottom) - max(ai.y, bi.y)
                 if o2 >= ov * min(ai.h, bi.h) and ub['box'].x >= ua['box'].right - 0.5:
-                    if all(x.role == 'tag' for x in ua['shapes']) or all(x.role == 'tag' for x in ub['shapes']):
-                        continue                        # 小容器按文字收宽，右侧参差；横向间距由它所在的列判定
+                    if all(x.role in ('tag', 'icon') for x in ua['shapes']) or all(x.role in ('tag', 'icon') for x in ub['shapes']):
+                        continue                        # 小容器按文字收宽、icon 按自身尺寸，都比所在的格子窄；横向间距由它所在的列 / 同组的文字判定
                     blocked = any(uc is not ua and uc is not ub and uc['layer'] is ua['layer'] and uc['box'].x >= ua['box'].right - 0.5 and uc['box'].right <= ub['box'].x + 0.5
                                   and min(uc['ink'].bottom, ai.bottom) - max(uc['ink'].y, ai.y) > 0 for uc in us)
                     if not blocked and ua['layer'] is None:
@@ -1823,25 +1851,47 @@ def c21_series(ctx, _):
     return []
 
 
-@check('C-22', 'M', 'deck', '密度节奏：连续 3 heavy [M]；连续 3 同档 [W]；heavy ≤ 40% [M]；heavy 后 2 页内有 light/medium [M]；前 3 / 末 2 含 light [W]', ('deck.heavy_max',))
+def _rhythm_seq(ctx):
+    """节奏序列：content 页按 manifest.density；statement / section 页按 light 计入；cover / agenda / closing 不计。
+    返回 (逐页序列 [(idx, density)], 滑动窗口序列)：窗口序列里一组连续的 series 页合成 1 项（取其中最重的档，页码取最后一页）"""
+    order = ['light', 'medium', 'heavy']
+    full = []
+    for p in ctx.pages:
+        if p.is_content:
+            full.append((p.idx, p.mf.get('density'), p.mf.get('series')))
+        elif p.type in ('statement', 'quote', 'section'):
+            full.append((p.idx, 'light', None))
+    win = []
+    for idx, d, ser in full:
+        if ser and win and win[-1][2] == ser:
+            pd = win[-1][1]
+            win[-1] = (idx, d if order.index(d) > order.index(pd) else pd, ser) if d in order and pd in order else (idx, pd, ser)
+        else:
+            win.append((idx, d, ser))
+    return [(i, d) for i, d, _ in full], [(i, d) for i, d, _ in win]
+
+
+@check('C-22', 'M', 'deck', '密度节奏（statement / section 按 light 计入；一组 series 页在滑动窗口里算 1 页）：连续 3 heavy [M]；连续 3 同档 [W]；heavy ≤ 40% [M]；heavy 后 2 页内有 light/medium [M]；前 3 / 末 2 含 light [W]', ('deck.heavy_max',))
 def c22_rhythm(ctx, _):
     out = []
-    seq = _seq(ctx)
-    if not seq:
+    full, win = _rhythm_seq(ctx)
+    if not full:
         return out
-    d = [p.mf.get('density') for p in seq]
+    idx = [i for i, _ in win]
+    d = [x for _, x in win]
     for i in range(len(d) - 2):
         if d[i] == d[i + 1] == d[i + 2]:
             lvl = 'M' if d[i] == 'heavy' else 'W'
-            out.append(F(seq[i + 2].idx, 'C-22', lvl, f'连续 3 页同为 {d[i]}', pages=[seq[i].idx, seq[i + 1].idx, seq[i + 2].idx]))
-    heavy = d.count('heavy')
-    if heavy / len(d) > ctx.th['deck']['heavy_max']:
-        out.append(F(None, 'C-22', 'M', 'heavy 页占比超限', heavy=heavy, content=len(d), ratio=round(heavy / len(d), 2), max=ctx.th['deck']['heavy_max']))
+            out.append(F(idx[i + 2], 'C-22', lvl, f'连续 3 页同为 {d[i]}', pages=[idx[i], idx[i + 1], idx[i + 2]]))
+    fd = [x for _, x in full]                       # 占比按逐页序列算（series 不合并）
+    heavy = fd.count('heavy')
+    if heavy / len(fd) > ctx.th['deck']['heavy_max']:
+        out.append(F(None, 'C-22', 'M', 'heavy 页占比超限', heavy=heavy, pages=len(fd), ratio=round(heavy / len(fd), 2), max=ctx.th['deck']['heavy_max']))
     for i, v in enumerate(d):
         if v == 'heavy' and i < len(d) - 1:
             nxt = d[i + 1:i + 3]
             if not any(x in ('light', 'medium') for x in nxt):
-                out.append(F(seq[i].idx, 'C-22', 'M', 'heavy 页之后 2 页内没有 light/medium', following=nxt))
+                out.append(F(idx[i], 'C-22', 'M', 'heavy 页之后 2 页内没有 light/medium', following=nxt))
     if 'light' not in d[:3]:
         out.append(F(None, 'C-22', 'W', '前 3 页内没有 light 页', first=d[:3]))
     if 'light' not in d[-2:]:

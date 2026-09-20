@@ -159,7 +159,7 @@ for 每个文本形状:
   以元素为单位（§3.4b）。上下相邻按形状框的水平投影判（文本框宽即列宽），距离按墨迹框量
   行到行：a 所在的行（同层、同一区域背景范围内、横向不重叠，且顶沿 / 垂直中心对齐 ±2pt 或竖向墨迹重叠 ≥ 30% 的元素）的最低下沿 → b 所在行的最高上沿；算出来为负（偶然对齐的独立列）时退回两两距离；S-02 里两两距离与行到行距离只要有一个落在档上就算合格（并排格子里各自叠放的内容按两两距离，整行对齐的按行到行）
   从 panel:region 外走到区域内：量到区域内全部元素的最高上沿
-  横向：两者之间隔着同层的另一个形状、或隔着一整列（本行在那一列是空位）时不算相邻；只含 tag 的元素不参与横向判定（小容器按文字收宽）；
+  横向：两者之间隔着同层的另一个形状、或隔着一整列（本行在那一列是空位）时不算相邻；只含 tag 或只含 icon 的元素不参与横向判定（小容器按文字收宽、icon 按自身尺寸，都比所在的格子窄）；
         n ≥ 3 的并列组里隔着空位的两项，间距扣掉整数个节距再判
 竖向间距用墨迹框。间距集合 = 所有最近邻间距。g 不由集合反算：它是 layout.py 算出并写进页级 manifest 的值，校验器读 manifest.g。
 title / kicker 到 body 元素的间距不参与 S-02 的 {g, 2g, 3g} 判定：它由 C-09（≥ 3g − e）单独判定。title 与 kicker 之间的间距照常参与。
@@ -176,7 +176,7 @@ title / kicker 到 body 元素的间距不参与 S-02 的 {g, 2g, 3g} 判定：�
 | 页类型 | 参与的检查 |
 |---|---|
 | content | 全部（含 C-37） |
-| cover / agenda / section / closing / statement | 仅 roles、字体、颜色、字号下限、title 字间距；title 按 09 规则（cover / section 居中：\|center_x − page_cx\| ≤ 4pt，字号 45–64）；不计入节奏、变化、尺度、间距、容器、层级 |
+| cover / agenda / section / closing / statement | 仅 roles、字体、颜色、字号下限、title 字间距；statement / section 另按 light 计入 C-22 的节奏序列；title 按 09 规则（cover / section 居中：\|center_x − page_cx\| ≤ 4pt，字号 45–64）；不计入节奏、变化、尺度、间距、容器、层级 |
 
 - C-29 agenda [W]：manifest 有 `image` 且 layout ∈ {5, 6}（形状按 §7 反算）；条目文字（body / heading）最大字号 ≥ 20
 - C-28 statement [W]：`hero:big-label` 的字号按句子长度（汉字当量，标点不计）落在阶梯内：≤ 7 → 72；8–14 → 60；15–24 → 48–54；25–40 → 40；> 40 → 改要点页。兜底：hero 墨迹框宽 ∈ [45%, 60%] 页宽、高 ∈ [20%, 35%] 页高，中心与页面中心差 ≤ 5% 页宽 / 页高
@@ -215,6 +215,8 @@ manifest.focus 与形状核对（§7）：form = numbers → `hero:big-number` �
 ### C-04 密度分档 [M]
 - 汉字当量 = CJK 字符数 + 2 × 英文词数（`[A-Za-z0-9][A-Za-z0-9'\-]*`），标点与空白不计。计数范围：foreground 文本减 title、pagenum、source；表格单元格计入
 - 元素数 = 含 countable 形状的元素数（§3.4b：紧贴对合并成一个元素），其中 table 计 1 + 行数 / 4
+  - 并列组（§3.4b 的几何判定：同层、同角色、同上沿 / 中线、等间距，n ≥ 3）按 1 + n / 4 计，与 table 一致
+  - 作为要点符号或某个条目配图的 icon 与该条目合计 1 个，不单独计数：紧贴对已合并；单独成元素的 icon 只要与某个非 icon 的计数元素同行或同列（形状框投影重叠 ≥ 30%）就归它
 - 字数档：≤ 120 轻，121–300 中，301–480 重，> 480 失败（拆页）
 - 元素档：≤ 8 轻，9–20 中，> 20 重
 - 本页档 = 两者中较重者。与 manifest.density 不符 → 失败（§7）
@@ -362,11 +364,13 @@ pptxgenjs 图表设最小内边距：`plotArea` 铺满、legend 放图内右上�
 series 非空的页合计 ≤ 40% 内容页。
 
 ### C-22 密度节奏 [M/W]
-- 连续 3 页都为 heavy → M
-- 连续 3 页同档（任意档）→ W
-- heavy 占比 ≤ 40% → M
-- 每个 heavy 页之后 2 页内出现 light 或 medium → M
-- 前 3 页含 light、末 2 页含 light → W
+节奏序列：content 页按 manifest.density；statement / section 页按 light 计入（它们的其它豁免不变）；cover / agenda / closing 不计。滑动窗口类检查里，一组连续的 series 页算 1 页（取其中最重的档）；占比按逐页序列算，series 不合并。
+
+- 连续 3 页都为 heavy → M（窗口）
+- 连续 3 页同档（任意档）→ W（窗口）
+- heavy 占比 ≤ 40% → M（逐页）
+- 每个 heavy 页之后 2 页内出现 light 或 medium → M（窗口）
+- 前 3 页含 light、末 2 页含 light → W（窗口）
 
 ### C-23 副标题 / 结论行占比 [M]
 subtitle=true 的页 ≤ 60% 且不连续 4 页；conclusion=true 连续 ≤ 2 且 ≤ 50%。
