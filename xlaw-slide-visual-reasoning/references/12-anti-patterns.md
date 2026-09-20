@@ -1,0 +1,30 @@
+## 12-anti-patterns.md
+
+- 每个问题都有：Anti-pattern、Symptoms、Why it fails、How to fix、Exceptions
+- 比如：
+  - Everything Is Emphasized：所有内容都有颜色、粗体、icon。
+  - Card Grid Syndrome：所有内容都被放入圆角 card
+  - Rainbow Slide：颜色很多但没有语义。
+  - No Focal Point：页面没有第一层级，看不出这一页在讲谁。
+  - Wall of Text：内容直接复制到 PPT。
+  - Fake Minimalism：字少，但视觉上没有构图。
+  - Template Repetition：每页只是相同 layout 换内容。综合判定见 13 机器校验清单末项。
+  - Excessive Decoration：线、渐变、图标、形状没有信息作用。
+  - Over-compression：为了塞内容缩字号、缩间距。
+  - Over-designed Diagram：结构简单却使用复杂图形。
+  - Filled-but-not-Full：内容既没填到版心边缘，留出的空又不够读成有意留白（见 01 Whitespace、14 S-03 / S-05）。
+  - Floating Elements：每个元素周围一圈等量边距，留白被打碎，页面没有一块能呼吸的空。
+  - Uniform Rhythm：整套 deck 每页密度相同、每页都有副标题和结论行、每页列结构相同。
+  - First-result Image：图片是搜索结果第一张，没有对着选图标准筛过。
+  - Image Drift：同为摄影的各页图片单看都行，拼在一起色温、镜头语言、年代感各不相同。
+  - Lonely Giant Number：整页只有一个巨大数字，其余都是小字；数字与正文之间没有中间层。
+  - Hidden in Small Print：论述对象、结论、图表标题、序列名落在小字里。
+  - Title Echo：页面主体把大标题复述一遍。
+  - Meta-label Title：「结论先行」这类元标签当标题。
+  - Fat Chart：小数据量图表被拉满版心，柱子粗壮。
+  - Floating Image：图片不在 7 种配图方式之内，悬在页面中间。
+  - Paragraphed Parallel：并列 / 分类内容写成段落或同号小字，没有视觉并列。
+  - Timeline as List：时间节点写成列表。
+  - Accent Everywhere：一组并列小标题全部加粗 + 高亮，icon、分支数字也用高亮色，重点反而不突出。
+  - Uneven Bullets：同页 bullet 圆点大小不一（圆点跟随了段首文字的字体）。
+  - Loose Component：互相解释的一组元素（数字 + 图）被拉开摆放。

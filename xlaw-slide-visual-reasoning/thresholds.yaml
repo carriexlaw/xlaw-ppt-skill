@@ -1,0 +1,69 @@
+# 14-validation-spec.md §8 默认值，原样落盘。validate_design.py 不写死任何数值。
+raster_cell: 4
+ink: {cjk: 1.0, latin: 0.55, space: 0.3, line_spacing: 1.2, inset: 7.2}   # run 有字间距（spc）时每字再加 spc/100 pt
+density: {light_chars: 120, medium_chars: 300, max_chars: 480,
+          light_elems: 8, medium_elems: 20, void_hero_chars: 80}
+hero: {area_frac: 0.30}                          # 只对 hero:table / hero:image 生效（font_mult 3.0 已删，第五轮）
+# ---- 层级（01 Visual Hierarchy / 14 C-01、C-03；第五轮，数值类先记 W）
+hierarchy:
+  max_heroes: 4                                   # 每页 hero:* 0–4 个
+  max_ratio: 3.5                                  # 最大字号（title 除外）/ 正文 ≤ 3.5
+  heading_min_mult: 1.25                          # heading 字号 ≥ 1.25 × 正文
+  heading_mult: [1.4, 1.8]                        # 生成端：小标题级 1.4–1.8 b
+  label_mult: [1.1, 1.8]                          # 生成端：数字释义 1.1–1.8 b
+  number_mult: [2.5, 3.2]                         # 生成端：大数字 2.5–3.2 b
+  number_max: 54                                  # 内容页大数字上限
+  echo_jaccard: 0.6                               # C-11：小标题级以上文字与 title 的 2-gram Jaccard
+  para_gap_mult: 0.4                              # 02：bullet 段距 ≈ 0.4 × 字号（16pt → 6pt），字号越大段距越大
+  heading_free_chars: 10                          # C-37：提炼的小标题（heading / tag，≤ 10 字）不计入字数
+  meta_labels: [结论先行, 核心观点, 核心结论, 背景, 小结, 总结, 概述]
+title: {spacing_frac: [0.06, 0.12], heavy_size: [28, 32], other_size: [36, 40],   # C-13 字间距 / 字号 [M]；S-01 按档字号 [W]
+        content_spacing: 0.075, special_spacing: 0.10,                            # 生成端：内容页 title 字间距 7.5%（36–40pt ≈ 3pt），封面 / 章节 / 目录 10%
+        max_width_frac: 0.84}                                                      # 生成端：title 墨迹宽 > 84% 标题宽 → 缩一档（长标题适当缩号，可低于该档区间，不低于 title_size.min）
+cover_title_size: [45, 64]                        # §3.5
+statement:                                        # 06 / 14 §3.5 [W]
+  ladder: [[7, 72, 72], [14, 60, 60], [24, 48, 54], [40, 40, 40]]   # [最大汉字当量, 字号下限, 字号上限]
+  block_w: [0.45, 0.60]
+  block_h: [0.20, 0.35]
+  center_frac: 0.05
+agenda: {item_min_size: 20, layouts: [5, 6]}      # 09 / 14 §3.5 [W]
+region: {edge_tol: 1, edges_min: 3}               # C-10b [M]
+legend_min_size: 18                               # 07 [W]
+pagenum_required_over: 20                         # C-16：> 20 页才要求页码
+anchor: {title_tol: 2, mask_edge_frac: 0.05, mask_edge_vtol: 4, image_center_frac: 0.10, cover_center_tol: 4}
+type_scale_tol: 0.5
+max_sizes_per_page: 5                             # 不计 title / source / pagenum
+accent_max_chars: 20
+contrast: {body: 4.5, large: 3.0, large_pt: 18, large_bold_pt: 14, percentile: 80}
+deck: {series_max: 0.40, heavy_max: 0.40, subtitle_max: 0.60, subtitle_run: 4,
+       conclusion_run: 2, conclusion_max: 0.50, noframe_min: 0.333}
+composite: {same_density: 0.80, both_lines: 0.80, same_container: 0.80,
+            hierarchy_fail: 0.50, filled_edges: 0.80, pattern_share: 0.40, hits: 3}
+images: {viewed_min: 8, reason_min: 8, thumb_max_px: 640, phash_min: 12,
+         fullbleed_min_px: 1920, small_mult: 2, temp_z: 1.5}
+cards: {min: 2, max: 6}                           # C-10
+image_aspect_tol: 0.02
+text: {para_max_chars: 100, para_max_lines: 4, box_max_chars: 200, source_mult: 1.1}   # source_mult：C-37 正文字数 ≤ 1.1 × source_chars
+# ---- 尺度优先（14 §4 S-01–S-06；2026-09-17 第三轮；bands 2026-09-20 第五轮改）
+scale:
+  bands:                                          # S-01：按密度档定字号档（只取 type_scale 里的值）
+    light:  {body_min: 18, body_cap: 20}          # 第五轮：密度档只定正文起始值；body_cap 是生成端放大上限，不是校验上限
+    medium: {body_min: 16, body_cap: 16}
+    heavy:  {body_min: 14, body_cap: 14}
+  hero_block_h: 0.80                              # S-01：hero:table / hero:image 高度 ≥ 0.8 × body 高（图表不查）
+  overlap: 0.30                                   # 相邻判定：投影重叠 ≥ 30%（以较窄者计）
+  tight_max_mult: 0.8                             # §3.4b 紧贴对：墨迹横向间距 ≤ 0.8g（或相交）的指定角色对合并成一个元素
+  g_min_mult: 0.5                                 # S-02：0.5 × 正文字号 ≤ g（g 由 layout.py 算出并写进页级 manifest）
+  g_max_mult: 1.5                                 # S-02：g ≤ 1.5 × 正文字号
+  steps: [1, 2, 3]                                # S-02：所有间距 ∈ {g, 2g, 3g}
+  step_tol: 0.20                                  # S-02：±20%
+  column_gap_steps: [2, 3]                        # S-02：分栏间距 = 2g 或 3g
+  e_mult: 1.2                                     # S-03 / S-04 / C-09：e = 1.2g
+  nowrap_safety: 1.25                             # 生成端：大数字 / 释义不折行的宽度安全系数（Avenir Next Bold 数字约 0.65em，估算 0.55）
+  title_gap_step: 3                               # C-09：title 下沿到 body 第一个元素 = 3g
+  inset_min_mult: 1                               # S-04：p ∈ [g, 3g]
+  inset_max_mult: 3
+  container_empty_mult: 2                         # S-04：容器内空矩形短边 ≤ 2p
+  hole_mult: 3                                    # S-05：content bbox 内最大空矩形短边 ≤ 3g
+  align_max: 3                                    # S-06：左沿 / 右沿各 ≤ 3 个值
+  align_tol: 2                                    # S-06：±2pt

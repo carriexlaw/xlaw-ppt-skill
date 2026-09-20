@@ -1,0 +1,40 @@
+# schema 违规：页级枚举非法；出现已删除的 void；columns 格式非法；缺必填字段。校验器应在 schema 阶段停下，exit 1。
+deck:
+  page: {w: 960, h: 540}
+  margins: {l: 48, r: 48, t: 40, b: 40}
+  title_anchor: {x: 48, y: 40, tol: 2}
+  pagenum_anchor: {x: 48, y: 508, tol: 2}
+  type_scale: [10.5, 12, 16, 20, 28, 50, 72]
+  title_size: {min: 27, max: 30}
+  min_size: 10.5
+  fonts: [PingFang SC]
+  fonts_latin: [Avenir Next]
+  palette:
+    accent: [1F4FD8]
+    secondary: [0B1F3A]
+    tertiary: [EEF2F7]
+    neutral: ['000000', FFFFFF]
+  accent_max_chars: 20
+  shape_language: {corner: 4, stroke: 0.75}
+  tone: argument
+pages:
+  - page: 1
+    type: cover
+  - page: 2
+    type: content
+    message: x
+    pattern: bullets
+    focus: {object: 负向测试, form: headings, count: 0}          # 非法枚举
+    density: heavy
+    container: divider
+    void: {side: right, size: 0.30}      # 已删除的字段
+    columns: "a:b"                       # 列比格式非法
+    g: -3                                # g 必须是正数
+    source_chars: 1.5                    # 必须是正整数
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
+  - page: 3
+    type: content               # 缺 message / pattern / hero …
