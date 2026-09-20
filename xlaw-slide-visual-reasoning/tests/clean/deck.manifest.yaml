@@ -1,0 +1,260 @@
+# 测试 deck：东南亚建厂决策报告（内部管理层，会议室投影，论证型）。第五轮：层级重写（focus 模型）+ 可视化拆解；留白仍是尺度优先（14 S-01–S-06）
+deck:
+  page: {w: 960, h: 540}
+  margins: {l: 48, r: 48, t: 40, b: 40}
+  title_anchor: {x: 48, y: 40, tol: 2}
+  pagenum_anchor: {x: 880, y: 508, tol: 2}     # 15 页 ≤ 20：不放页码
+  type_scale: [10.5, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 54, 60, 72]
+  title_size: {min: 28, max: 40}
+  min_size: 10.5
+  fonts: [Source Han Sans CN, Avenir Next]
+  fonts_latin: [Avenir Next]
+  font_pairs: {Source Han Sans CN Bold: Avenir Next, Source Han Sans CN Medium: Avenir Next Medium, Source Han Sans CN Light: Avenir Next}
+  palette:
+    accent: [1F4FD8]
+    secondary: [0B1F3A, 16305C]
+    tertiary: [E3ECFC, F4F7FD]
+    accent_light: [9CC8FF]
+    data_muted: [8A9AB5]
+    neutral: ['000000', FFFFFF, '333333', 7A7A7A, 3A4150, F3F4F6]
+  accent_max_chars: 20
+  shape_language: {corner: {small: full, medium: 12, large: 0}, stroke: 0.75}
+  tone: argument
+
+pages:
+  - page: 1
+    type: cover
+    image:
+      role: full-bleed
+      layout: 1
+      side: full
+      source: pexels
+      id: "13606787"
+      photographer: Atlantic Ambience
+      url: https://www.pexels.com/photo/an-aerial-photography-of-a-cargo-ship-sailing-on-the-sea-13606787/
+      query: cargo ship open ocean aerial blue
+      candidates_viewed: 20
+      reason: 蓝天蓝海低地平线，货轮压在右下角，中央大片负空间可放居中标题；冷色与色板一致
+  - page: 2
+    type: agenda
+    image:
+      role: atmosphere
+      layout: 5
+      side: left
+      source: pexels
+      id: "27383355"
+      photographer: Wolfgang Weiser
+      url: https://www.pexels.com/photo/hochhausidylle-27383355/
+      query: modern glass office building facade blue sky
+      candidates_viewed: 20
+      reason: 仰拍玻璃塔楼，裁成竖条后仍是一根向上的线，冷蓝；目录页按配图方式 5 贴左缘，与封面的海面区分开
+  - page: 3
+    type: statement
+    message: 不建海外产能，三年内欧美订单流失四成
+    image:
+      role: full-bleed
+      layout: 1
+      side: full
+      source: pexels
+      id: "28970204"
+      photographer: zs Lin
+      url: https://www.pexels.com/photo/aerial-view-of-a-bridge-over-turquoise-water-28970204/
+      query: aerial coastal highway ocean blue
+      candidates_viewed: 20
+      reason: 跨海大桥俯拍，画面只有一条线与青绿海面，负空间左右都有，压深色遮罩后文字可读；不与封面构图重复
+  - page: 4
+    type: content
+    message: 税差扩大到 25 个点，价格优势已被抵消
+    pattern: bar-chart
+    focus: {object: 中越对美税差的趋势, form: chart, count: 1}
+    density: light
+    container: none
+    columns: "1:1"
+    g: 27.0
+    source_chars: 111
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: null
+    visual_side: left
+    chart: {focus_series: 越南}
+  - page: 5
+    type: content
+    message: 前十大客户中六家已把海外产能写成准入条件
+    pattern: grouped-categories
+    focus: {object: 提出要求的客户类型, form: headings, count: 4}
+    density: medium
+    container: none
+    columns: "2:1"
+    g: 15.25
+    source_chars: 146
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: null
+    visual_side: right
+  - page: 6
+    type: section
+  - page: 7
+    type: content
+    message: 三国在成本、配套、风险上各有取舍
+    pattern: comparison-table
+    focus: {object: 三个候选国的八项指标, form: table, count: 1}
+    density: medium
+    container: none
+    columns: "1"
+    g: 16
+    source_chars: 157
+    contrast: restrained
+    title_pos: base
+    subtitle: true
+    conclusion: false
+    series: null
+    visual_side: full
+  - page: 8
+    type: content
+    message: 越南快，供应链可整体搬迁，但工资涨得快
+    pattern: kpi-pros-cons
+    focus: {object: 越南选址的三项关键指标, form: numbers, count: 3}
+    density: medium
+    container: stroke
+    columns: "1:1"
+    g: 17.13
+    source_chars: 124
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: country
+    visual_side: right
+    image:
+      role: atmosphere
+      layout: 5
+      side: right
+      source: pexels
+      id: "1211787"
+      photographer: Khunkorn Laowisit
+      url: https://www.pexels.com/photo/ship-with-container-vans-1211787/
+      query: Vietnam industrial port cranes containers
+      candidates_viewed: 17
+      reason: 货轮与岸吊直接对应海防港口，冷灰蓝天，画面无人物无文字；其余候选多为下龙湾风景或暖调黄昏
+  - page: 9
+    type: content
+    message: 泰国稳，配套与政治风险最优，但成本最高
+    pattern: kpi-pros-cons
+    focus: {object: 泰国选址的三项关键指标, form: numbers, count: 3}
+    density: medium
+    container: stroke
+    columns: "1:1"
+    g: 14.38
+    source_chars: 115
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: country
+    visual_side: right
+    image:
+      role: atmosphere
+      layout: 5
+      side: right
+      source: pexels
+      id: "6060193"
+      photographer: Tom Fisk
+      url: https://www.pexels.com/photo/cityscape-of-industrial-town-with-factory-6060193/
+      query: Thailand eastern seaboard factory warehouse aerial drone
+      candidates_viewed: 38
+      reason: 泰国工厂斜俯拍，厂房清晰、带绿地，冷绿调；与印尼页同为斜俯拍，系列页视角一致。第一轮候选是越南工业园，第二轮换成泰国实景
+  - page: 10
+    type: content
+    message: 印尼便宜，但配套为零，只适合作第二阶段
+    pattern: kpi-pros-cons
+    focus: {object: 印尼选址的三项关键指标, form: numbers, count: 3}
+    density: medium
+    container: stroke
+    columns: "1:1"
+    g: 14.53
+    source_chars: 121
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: country
+    visual_side: right
+    image:
+      role: atmosphere
+      layout: 5
+      side: right
+      source: pexels
+      id: "37815248"
+      photographer: Adiardi Zulfansyah
+      url: https://www.pexels.com/photo/stunning-aerial-view-of-jayapura-s-tropical-coastline-37815248/
+      query: Batam Indonesia aerial island
+      candidates_viewed: 19
+      reason: 印尼沿海城市航拍（查亚普拉），海岛与城市并置对应「岛屿工业区」，冷蓝色；其余候选多为渔船与度假海滩
+  - page: 11
+    type: content
+    message: 海外工厂的失败八成不是选错地方，而是派错人
+    pattern: multi-column-points
+    focus: {object: 四条派人与治理的共性结论, form: headings, count: 4}
+    density: heavy
+    container: none
+    columns: "1"
+    g: 15.42
+    source_chars: 405
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: false
+    series: null
+    visual_side: full
+  - page: 12
+    type: content
+    message: 客户验厂必须在 2027 Q3 完成
+    pattern: horizontal-timeline
+    focus: {object: 18 个月的落地路径, form: timeline, count: 1}
+    density: heavy
+    container: none
+    columns: "1"
+    g: 20.79
+    source_chars: 89
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: none
+  - page: 13
+    type: statement
+    message: 客户要的不是离开中国，是第二个地址
+    image:
+      role: full-bleed
+      layout: 1
+      side: full
+      source: pexels
+      id: "405857"
+      photographer: Mohannad Marashdeh
+      url: https://www.pexels.com/photo/low-angle-photo-of-buildings-405857/
+      query: skyscrapers looking up blue dusk glass towers
+      candidates_viewed: 12
+      reason: 四角冷蓝玻璃塔楼、中央大片天空作负空间，压深色遮罩后居中的英文引言可读；客户总部语境，无人物无标识
+  - page: 14
+    type: content
+    message: 推荐先越南后印尼，本季度批准选址预算
+    pattern: options-cards
+    focus: {object: 三个方案, form: headings, count: 3}
+    density: medium
+    container: fill
+    columns: "1"
+    g: 22.64
+    source_chars: 166
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: null
+    visual_side: none
+  - page: 15
+    type: closing

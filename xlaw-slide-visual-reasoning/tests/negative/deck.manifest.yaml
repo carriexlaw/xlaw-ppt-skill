@@ -1,0 +1,257 @@
+# 负向测试 deck：故意违规，每条 M 检查至少命中一次（含 S-01–S-06）。deck 级 manifest 与干净 deck 相同。
+# deck 级违规靠 pages 的声明制造：相邻页五项全同（C-20）、连续 heavy 且占比超限（C-22）、副标题 / 结论行占比与连续（C-23）、
+# 每页都有容器（C-24）、模板复制感综合（C-26）、系列页占比（C-21 W）、主元素单一（C-25 W）。
+deck:
+  page: {w: 960, h: 540}
+  margins: {l: 48, r: 48, t: 40, b: 40}
+  title_anchor: {x: 48, y: 40, tol: 2}
+  pagenum_anchor: {x: 48, y: 508, tol: 2}
+  type_scale: [10.5, 12, 16, 20, 28, 40, 50, 72]
+  title_size: {min: 27, max: 30}
+  min_size: 10.5
+  fonts: [Microsoft YaHei, Noto Sans SC, PingFang SC, Segoe UI, Avenir Next]
+  fonts_latin: [Avenir Next]
+  palette:
+    accent: [1F4FD8]
+    secondary: [0B1F3A, 16305C]
+    tertiary: [EEF2F7, F6F8FB]
+    neutral: ['000000', FFFFFF, '333333', 7A7A7A]
+  accent_max_chars: 20
+  shape_language: {corner: 4, stroke: 0.75}
+  tone: argument
+
+pages:
+  - page: 1
+    type: cover
+  - page: 2                      # C-01：未标记形状
+    type: content
+    message: 未标记形状
+    pattern: bullets
+    focus: {object: 负向测试, form: numbers, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: s
+  - page: 3                      # C-02 标题偏移；C-13 字体 / 字号；C-14 颜色；C-16 页码
+    type: content
+    message: 锚点与字体颜色
+    pattern: bullets
+    focus: {object: 负向测试, form: numbers, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: s
+  - page: 4                      # C-03 主元素不足 3 倍 + 隐性第二主元素；C-11 kicker 存在但 subtitle=false、结论行复述标题
+    type: content
+    message: 主元素与结论行
+    pattern: bullets
+    focus: {object: 负向测试, form: numbers, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: s
+  - page: 5                      # C-04 超 480 字；C-37 超过 source_chars 的 1.1 倍；C-10 卡片 2 张且样式混用
+    type: content
+    message: 字数与卡片
+    pattern: bullets
+    focus: {object: 负向测试, form: numbers, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 200
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: s
+  - page: 6                      # S-02 g 低于下限且间距不成 {g,2g,3g}；C-09 标题下方 20 ≠ 3g
+    type: content
+    message: 留白与间距
+    pattern: bullets
+    focus: {object: 负向测试, form: numbers, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: s
+  - page: 7                      # C-15 图上文字对比度；C-34 分辨率；C-32 与下页同图；S-01 hero:image 高度不足；C-03 面积不足；C-35 拉伸
+    type: content
+    message: 图片与碎片留白
+    pattern: bullets
+    focus: {object: 负向测试, form: image, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
+    image:
+      role: semantic
+      layout: 6
+      side: right
+      source: pexels
+      id: "1211787"
+      photographer: Khunkorn Laowisit
+      url: https://www.pexels.com/photo/ship-with-container-vans-1211787/
+      query: Vietnam industrial port cranes containers
+      candidates_viewed: 17
+      reason: 与下一页同一张图，用来触发相邻页构图重复
+  - page: 8                      # C-30 选图记录：viewed 数不符、id 不在候选内、reason 过短、备注缺来源；C-32 同图
+    type: content
+    message: 选图记录
+    pattern: bullets
+    focus: {object: 负向测试, form: image, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
+    image:
+      role: semantic
+      layout: 6
+      side: right
+      source: pexels
+      id: "000000"
+      photographer: Nobody
+      url: https://example.com/
+      query: port
+      candidates_viewed: 3
+      reason: 好看
+  - page: 9                      # S-03 内容块横向未填满；S-05 大洞；S-02 g 过大
+    type: content
+    message: 留白带与连通
+    pattern: bullets
+    focus: {object: 负向测试, form: numbers, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
+  - page: 10                     # C-18 [W] 主元素在页尾；C-09 标题下方偏离 3g；S-03 底对齐留顶
+    type: content
+    message: 主元素在页尾
+    pattern: bullets
+    focus: {object: 负向测试, form: headings, count: 0}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
+  - page: 11                     # S-04 容器不贴内容；C-10 panel + divider 两种容器
+    type: content
+    message: 容器不贴内容
+    pattern: bullets
+    focus: {object: 负向测试, form: numbers, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
+  - page: 12                     # S-01 正文 10.5 / hero 40 不在 medium 档内；C-40 密度声明与反算不符
+    type: content
+    message: 尺度不随密度
+    pattern: bullets
+    focus: {object: 负向测试, form: numbers, count: 1}
+    density: medium
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
+  - page: 13                     # S-06 对齐线超过 3 条、title 左沿无元素对齐
+    type: content
+    message: 对齐线失守
+    pattern: bullets
+    focus: {object: 负向测试, form: numbers, count: 1}
+    density: heavy
+    container: divider
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
+  - page: 14                     # 第五轮：C-01 hero 不一致 / region 与 card 同页；C-10 region 未贴三边；C-11 复述标题 + 元标签；C-13 title 两行、大数字未加粗；C-40 focus 不符
+    type: content
+    message: 层级规则失守
+    pattern: bullets
+    focus: {object: 负向测试, form: headings, count: 3}
+    density: heavy
+    container: stroke
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
+  - page: 15                     # 第五轮（几何阶段）：C-10 region 未贴三边；C-11 复述标题 + 元标签；C-13 title 两行、大数字未加粗；C-40 focus 不符
+    type: content
+    message: 层级规则失守
+    pattern: bullets
+    focus: {object: 负向测试, form: headings, count: 3}
+    density: heavy
+    container: none
+    columns: "1"
+    g: 18
+    source_chars: 900
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: true
+    series: null
