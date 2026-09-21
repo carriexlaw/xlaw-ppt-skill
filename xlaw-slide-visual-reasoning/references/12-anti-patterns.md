@@ -31,4 +31,8 @@
   - Resort Cover：商务 deck 用海岛 / 沙滩风景做封面或目录图；从品牌名字面联想配图。
   - Accent Everywhere：一组并列小标题全部加粗 + 高亮，icon、分支数字也用高亮色，重点反而不突出。
   - Uneven Bullets：同页 bullet 圆点大小不一（圆点跟随了段首文字的字体）。
+  - Loud Numbering：大圆形容器 + 小数字的序号，存在感比要点本身还强。
+  - Same Ornament Next Door：相邻的非系列页用同一种序号 / 容器样式。
+  - Gap Wider than Margin：要点之间的间距比要点模块到标题、到页边的距离还大。
+  - Flow as Timeline：带分叉的流程借时间线画；面性箭头用深色抢了节点的重点。
   - Loose Component：互相解释的一组元素（数字 + 图）被拉开摆放。

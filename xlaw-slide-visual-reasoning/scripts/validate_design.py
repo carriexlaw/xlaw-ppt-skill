@@ -35,7 +35,7 @@ IMAGE_LAYOUT_TOL = 0.05              # §7：配图方式反算时形状框比�
 
 ENUM = {
     'type': {'cover', 'agenda', 'section', 'content', 'closing', 'statement', 'quote'},   # quote = statement 的旧名
-    'focus.form': {'numbers', 'headings', 'chart', 'table', 'timeline', 'image', 'statement'},
+    'focus.form': {'numbers', 'headings', 'chart', 'table', 'timeline', 'flow', 'image', 'statement'},
     'visual_side': {'left', 'right', 'full', 'none'},
     'density': {'light', 'medium', 'heavy'},
     'container': {'none', 'divider', 'fill', 'stroke'},
@@ -607,7 +607,8 @@ class PageCtx:
             return self._cache['gaps']
         ov = self.th['scale']['overlap']
         tol = self.th['scale']['align_tol']
-        us = [u for u in self.units() if not any(self.is_edge_image(x) for x in u['shapes'])]
+        # 第七轮：流程连接箭头（只含 arrow 的元素）放在分栏带 / 行间，是连接件不是内容，不参与间距判定，也不挡相邻关系
+        us = [u for u in self.units() if not any(self.is_edge_image(x) for x in u['shapes']) and not all(x.role == 'arrow' for x in u['shapes'])]
         # 行：同层、顶沿或垂直中心对齐（±2pt）且横向不重叠的元素。竖向间距在行与行之间量（行高由最高的那格决定）
         col_boxes = [c for c, _ in self.columns()]
         regions = self.regions
@@ -1147,6 +1148,11 @@ def _near_step(v, g, steps, tol):
     return any(abs(v - k * g) <= tol * k * g for k in steps)
 
 
+def _is_flow(page):
+    """流程页（focus.form = flow）：各格由箭头连接、下排具体流程按行居中，不按分栏的间距 / 对齐线 / 洞来判"""
+    return (page.mf.get('focus') or {}).get('form') == 'flow'
+
+
 @check('S-02', 'M', 'geometry', '间距：g 读 manifest（layout.py 写入），0.5 × 正文 ≤ g ≤ 1.5 × 正文；所有相邻间距 ∈ {g, 2g, 3g} ±20%；横向间距 = 2g / 3g',
        ('scale.g_min_mult', 'scale.g_max_mult', 'scale.steps', 'scale.step_tol', 'scale.column_gap_steps', 'scale.overlap'))
 def s02_spacing(ctx, page):
@@ -1169,7 +1175,7 @@ def s02_spacing(ctx, page):
     rows = []
     for layer in [None] + page.containers:
         _align_edges([u for u in page.units() if u['layer'] is layer], sc['align_tol'], rows_out=rows, keep_units=True)
-    for v, kind, a, b, *uab in gaps:
+    for v, kind, a, b, *uab in ([] if _is_flow(page) else gaps):      # 流程页只查 g 的上下限
         alt = uab[2] if len(uab) > 2 else None
         uab = uab[:2] if len(uab) >= 2 and uab[0] is not None else []
         if a.role in ('title', 'kicker') and b.role not in ('title', 'kicker'):
@@ -1317,7 +1323,7 @@ def s04_containers(ctx, page):
 @check('S-05', 'M', 'geometry', '无洞（行带口径）：content bbox 内栅格化，元素横向占满所在列、竖向按墨迹（分栏间距带、容器、并列组整体置 1），最大空矩形短边 ≤ 3g', ('scale.hole_mult', 'scale.overlap', 'raster_cell'))
 def s05_holes(ctx, page):
     out = []
-    if not page.is_content:
+    if not page.is_content or _is_flow(page):
         return out
     cb = page.content_box()
     if cb is None:
@@ -1428,6 +1434,9 @@ def s06_alignment(ctx, page):
         return next((r for r in regions if r.box.contains(u['box'], tol)), None)
     tops = [u for u in page.units() if u['layer'] is None and keep(u)]
     scopes = [('页面', [u for u in tops if region_of(u) is None])] + [(r.name, [u for u in tops if region_of(u) is r]) for r in regions]
+    if _is_flow(page) and scopes[0][1]:          # 流程页：各格靠箭头连接，只计整条流程的最左沿 / 最右沿
+        us0 = scopes[0][1]
+        scopes[0] = ('页面', [min(us0, key=lambda u: u['box'].x), max(us0, key=lambda u: u['box'].right)])
     scopes += [(c.name, [u for u in page.units() if u['layer'] is c and keep(u)]) for c in page.containers]
     for name, us in scopes:
         if not us:
@@ -1617,7 +1626,7 @@ def c13_fonts(ctx, page):
             out.append(F(page.idx, 'C-13', 'M', '中文大标题字间距应为字号的 10% 左右（pptxgenjs charSpacing = 0.1 × fontSize）', runs=bad[:4], range=[lo, hi]))
     if page.is_content:
         heavy = [f'{s.role}:{s.text[:10]}' for s in page.by_role.get('heading', []) + page.by_role.get('conclusion', [])
-                 if any(_CJK_CH.search(r.text) and (r.bold or any(f.endswith((' Bold', ' Heavy')) for f in r.fonts)) for r in s.runs)]
+                 if sum(len(r.text) for r in s.runs if _CJK_CH.search(r.text) and (r.bold or any(f.endswith((' Bold', ' Heavy')) for f in r.fonts))) > 0.5 * max(len(s.text), 1)]      # 个别关键词加粗不算：粗体字过半才警告
         if heavy:
             out.append(F(page.idx, 'C-13', 'W', '小标题 / 结论句用了大标题同款粗体：正文里除数字与个别关键词外不用 Bold，小标题用 Medium', shapes=heavy[:6]))
     for h in page.heroes:
@@ -2353,6 +2362,8 @@ def c40_crosscheck(ctx, page):
         mismatch('focus', fo, actual, note=f'form={form}：须恰有一个 hero:{form}')
     elif form == 'timeline' and (n_num or actual['arrow'] < 1 or actual['tag'] < 3):
         mismatch('focus', fo, actual, note='form=timeline：轴线 arrow ≥ 1、节点 tag ≥ 3，且不得挑一个时间做大数字')
+    elif form == 'flow' and (n_num or actual['arrow'] < 3 or actual['tag'] + len(page.by_role.get('icon', [])) < 3):
+        mismatch('focus', fo, actual, note='form=flow：流程图由箭头 + icon + 文字 / 带容器的文字组成：arrow ≥ 3、tag + icon ≥ 3，且无大数字')
     if 'container_set' in res:
         cs = res['container_set']
         actual_c = 'none' if not cs else (cs[0] if len(cs) == 1 else '+'.join(cs))

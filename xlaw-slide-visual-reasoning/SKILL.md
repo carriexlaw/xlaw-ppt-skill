@@ -88,6 +88,8 @@ python scripts/render_deck.py --check
    - **高亮色克制**（`01` Color）：accent 只给本页结论里最重要的数字 / 词；论据数字、释义、单位用深色；饱和高亮色不作背景、不铺大色块（章节页也不行，C-14 [M]）；暖色 accent 用得更少；accent 是暖色时区域背景取更灰、更冷的浅色。先分清本页哪块是结论、哪块是论据：结论放大占主区，论据缩小
    - **数据带名称和单位**：每个数据配小标题级名称；单位紧跟数字（layout 的 text 节点 `unit`），不藏进小字；前后对比标出对比维度（时间）；「大数字 → 大数字」全 deck ≤ 3 页，其余用小表格 / 成对条形 / 堆叠条；构成用饼图 / 环形图，不用柱状图（`07`）
    - **高亮与粗体**：小标题、结论句用 Medium，不用大标题同款 Bold；一组并列小标题里只让一个成分用 accent；页面有重点组件时 accent 全部集中在它身上（其余小标题、圆点、数字降噪）；高亮已用在小标题上时 icon 用深色降噪。
+   - **流程图**（`03`）：箭头 + icon + 文字 / 带容器的文字；上排阶段标题 + icon 用深色线条箭头，下排具体流程用浅色面性箭头；分叉节点进容器，重点对象用 accent 色系；manifest `focus.form: flow`。用两行同 `ratios` 的 row 排，箭头由相邻格的框派生
+   - **序号**（`02`）：不用大圆 + 小数字；小圆（layout 的 circle tag 缺省 1.7 × 字号）+ 粗体数字，或目录式细体数字 + 同色细竖线；相邻非系列页的序号样式不同；并列要点之间用 2g 不用 3g
    - **bullet**：段首 run 给 `bullet: {code: '25CF'}`（accent）或 `'25CB'`（降噪色），postfix.py 统一成固定字体的 ● 135%（缺省 System Font Regular，`deck.bullet` 可覆盖），缩进约 1.4 × 字号；要点文本给段距 `paraSpaceBefore ≈ 0.4 × 字号`（layout 的 text 节点加 `para_gap: true`，输出里带 `para_gap`）。
    - **不造元标签、不复述标题**：「结论先行」这类词不做 title / kicker；小标题级以上的文字不把 title 再说一遍（C-11）。只有一句话的页用 `statement` 页类型（`06`）。
    - 每个 run 显式给 `fontFace`、`fontSize`、`color`；字号只取 `type_scale` 里的值；颜色只取色板里的值。行距用固定 pt：`lineSpacing: 1.2 × fontSize`，不用 `lineSpacingMultiple`（倍数相对字体自带行高，中文字体会渲染成约 1.46 × 字号，多行大字压到下一个元素，也和 inkbox 的估算对不上）。

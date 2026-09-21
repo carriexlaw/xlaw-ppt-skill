@@ -44,7 +44,7 @@ message: 一句话，本页唯一的 dominant message
 pattern: mapping          # 来自 02–08 对应类型的 patterns
 focus:                    # 第一层级，见 01 Visual Hierarchy：先写 object（这一页在讲谁），再选 form
   object: 三个方案
-  form: headings          # numbers / headings / chart / table / timeline / image / statement
+  form: headings          # numbers / headings / chart / table / timeline / flow / image / statement
   count: 3                # 第一层级元素个数（0–4；chart / table / timeline / image 填 1）
 density: medium           # 轻 / 中 / 重，见 01 Information Density
 container: none           # 无 / 分隔线 / 填充块 / 描边框
