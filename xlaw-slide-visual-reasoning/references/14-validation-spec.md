@@ -63,7 +63,7 @@ pages:
     pattern: mapping
     focus:                               # 第一层级：先写 object（这一页在讲谁），再选 form
       object: 三个方案
-      form: headings                     # numbers / headings / chart / table / timeline / image / statement
+      form: headings                     # numbers / headings / chart / table / timeline / flow / image / statement
       count: 3                           # 第一层级元素个数 0–4；chart / table / timeline / image 填 1
     density: medium                      # light / medium / heavy；决定本页正文起始字号（S-01）
     container: none                      # none / divider / fill / stroke
@@ -171,6 +171,11 @@ title / kicker 到 body 元素的间距不参与 S-02 的 {g, 2g, 3g} 判定：�
 - **并列组**：同层、成员角色相同、顶沿或垂直中心对齐（±2pt）的横排元素，n ≥ 3 且等距（相邻左沿差是最小差的整数倍 ±4pt，允许空位）或 n = 2 且等宽 → 整组在 S-06 里只按首项左沿、末项右沿各计一条对齐线
 - `panel:region` 内的元素在 S-06 里以该区域为一个独立范围另算 ≤ 3
 
+### 3.4c 连接箭头与流程页（第七轮）
+
+- 只含 `arrow` 的元素（流程箭头、连接线、序号后的细竖线）是连接件，不是内容：不参与 §3.4 的相邻间距，也不挡住两侧元素的相邻关系
+- 流程页（`focus.form: flow`）：各格由箭头连接，下排具体流程按行垂直居中、格宽随内容不等。S-02 只查 g 的上下限，不查 {g, 2g, 3g}；S-05 不查；S-06 页面范围只计整条流程的最左沿 / 最右沿（title 左沿仍须在其中）。其余检查不变
+
 ### 3.5 页类型豁免
 
 | 页类型 | 参与的检查 |
@@ -188,7 +193,7 @@ title / kicker 到 body 元素的间距不参与 S-02 的 {g, 2g, 3g} 判定：�
 ### C-01 角色标记 [M]
 roles.py。内容页恰一个 title；`hero:*` 0–4 个。同页多个 `hero:*` 时限定词必须相同，且各自最大 run 的字号、字重（bold）、颜色必须一致。`panel:region` 每页 ≤ 1，且不与 `card:N` 同页（中 + 大容器不同页）。
 
-manifest.focus 与形状核对（§7）：form = numbers → `hero:big-number` 数 = count；headings → `heading` 数 ≥ count；chart / table / image → 恰一个对应的 `hero:chart` / `hero:table` / `hero:image`；timeline → 无 `hero:big-number`，有 ≥ 1 个 `arrow` 与 ≥ 3 个 `tag`；statement 只用于 statement 页。
+manifest.focus 与形状核对（§7）：form = numbers → `hero:big-number` 数 = count；headings → `heading` 数 ≥ count；chart / table / image → 恰一个对应的 `hero:chart` / `hero:table` / `hero:image`；timeline → 无 `hero:big-number`，有 ≥ 1 个 `arrow` 与 ≥ 3 个 `tag`；flow → 无 `hero:big-number`，`arrow` ≥ 3 且 `tag` + `icon` ≥ 3（03：流程图 = 箭头 + icon + 文字 / 带容器的文字）；statement 只用于 statement 页。
 
 ### C-02 标题锚点 [M]
 基准：`deck.title_anchor`。按 `title_pos` 求期望位置，比 title 形状框：

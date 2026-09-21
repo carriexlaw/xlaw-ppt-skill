@@ -25,7 +25,7 @@ layout.py — 尺度循环（14 §4c）：由页级 manifest（density、columns
             unit：数字的单位（「万」「亿元」「个月」），与数字写在同一个文本框里、紧跟数字、字号 = 数字释义档或 "unit_size"（输出 unit_size）：单位不藏进小字释义
   icon      {"id", "kind": "icon", "em"?: 2.2, "align"?: "center"}     # 方形，边长 = em × 正文字号；align=center：在所在格 / 列内居中（与居中的文字同一条中轴线）
   box       {"id", "kind": "box", "role", "h": pt, "w"?: pt, "w_frac"?: 0.6, "align"?: "center"}     # 固定高的占位框（自绘的小表格 / 对比条），宽缺省 = 列宽
-  tag       {"id", "kind": "tag", "shape": "circle"|"pill", "text", "size"}     # 小容器：宽高由文字定
+  tag       {"id", "kind": "tag", "shape": "circle"|"pill", "text", "size", "d_em"?: 1.7}     # 小容器：宽高由文字定；circle 直径 = d_em × 字号（序号圆要小，数字加粗）
   brace     {"id", "kind": "brace"}                                    # 只作 pair.left：大括号，高 = pair 高（包含 / 组成关系）
   image     {"id", "kind": "image", "role", "path", "h"?}              # 无 h：伸缩（只在列的顶层）；输出 img_w / img_h
   chart     {"id", "kind": "chart", "role", "aspect"?: 0.75}           # 有 aspect：高 = 宽 × aspect（小型图表半宽）；无：伸缩
@@ -287,7 +287,8 @@ class Layout:
     def tag_dim(self, tag):
         size = float(tag['size'])
         if tag.get('shape', 'circle') == 'circle':
-            d = max(self.ink_of({'kind': 'text', 'text': tag['text'], 'size': size, 'tier': 'fixed'})[1] + 1.8 * size, 3.0 * size)
+            k = float(tag.get('d_em', 1.7))      # 第七轮：序号圆缩小（≈ 1.7 × 字号）+ 数字加粗；大圆 + 小数字不再用
+            d = max(self.ink_of({'kind': 'text', 'text': tag['text'], 'size': size, 'tier': 'fixed'})[1] + max(k - 1.2, 0.5) * size, k * size)
             return d, d
         return self.ink_of({'kind': 'text', 'text': tag['text'], 'size': size, 'tier': 'fixed'})[1] + 2.2 * size, 2.0 * size
 
