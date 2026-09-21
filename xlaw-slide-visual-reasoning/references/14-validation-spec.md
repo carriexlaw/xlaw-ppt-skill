@@ -265,7 +265,7 @@ kicker、conclusion 的存在与 manifest.subtitle / conclusion 一致。不重�
 - 内容页 title 最大 run 字号 ∈ [title_size.min, title_size.max]（28–40），且按 §3.3 估算为单行
 - 本页不同字号数 ≤ 5，不计 title / source / pagenum
 - title 字间距：所有页类型的 title，含 CJK 的 run 的 spc / 100 / 字号 ∈ [0.06, 0.12]（生成端：内容页 7.5%，封面 / 章节 / 目录 10%）
-- 小标题级不用大标题同款粗体 [W]：`heading` / `conclusion` 里粗体（bold 或字体名以 Bold / Heavy 结尾）的含 CJK run 字符数超过该文本的一半 → 警告；个别关键词加粗不算（正文里除数字与个别关键词外不用 Bold；一句话页除外）
+- 小标题级不用大标题同款粗体 [W]：`heading` / `conclusion` 的含 CJK run 为 bold 或字体名以 Bold / Heavy 结尾 → 警告（正文里除数字与个别关键词外不用 Bold；一句话页除外）
 - 英文字体：含数字或拉丁字母的 run，`a:latin` typeface 必须属于 deck.fonts_latin（pptxgenjs 会把 latin 写成中文字体，生成后必须跑 `scripts/postfix.py`）
 - `hero:big-number` 的最大 run 必须是粗体
 

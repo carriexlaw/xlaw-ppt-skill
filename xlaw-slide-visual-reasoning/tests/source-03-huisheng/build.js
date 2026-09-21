@@ -585,7 +585,7 @@ content(24, s => {
     const n = bx[`n${i}`], t = bx[`d${i}`], lx = (n.x + n.w + t.x) / 2, lh = Math.max(t.h, 48);
     text(s, [{ text: String(i + 1), o: { fontFace: EN, bold: false } }], n, { face: EN, color: C.muted, nowrap: true, valign: 'middle', name: 'label' });
     s.addShape(pres.shapes.LINE, { x: P(lx), y: P(t.y + t.h / 2 - lh / 2), w: 0, h: P(lh), line: { color: C.muted, width: 1.5 }, objectName: 'arrow' });
-    text(s, null, t, { face: ZH.light, color: C.dark, name: 'heading', paras: d[0].split('\n').map(l => rich(l, d[1])) });
+    text(s, null, t, { face: ZH.light, color: C.dark, name: 'heading', paras: d[0].split('\n').map(l => rich(l, d[1], { noBold: true }).map(x => (x.o.color === C.accent && x.o.fontFace !== EN_DEMI && x.o.fontFace !== EN ? (x.o.fontFace = ZH.med) : 0, x))) });      // 关键词 Medium + accent，不用 Bold
   });
   s.addNotes(NOTE[24]);
 });

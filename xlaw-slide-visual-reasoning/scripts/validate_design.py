@@ -1626,7 +1626,7 @@ def c13_fonts(ctx, page):
             out.append(F(page.idx, 'C-13', 'M', '中文大标题字间距应为字号的 10% 左右（pptxgenjs charSpacing = 0.1 × fontSize）', runs=bad[:4], range=[lo, hi]))
     if page.is_content:
         heavy = [f'{s.role}:{s.text[:10]}' for s in page.by_role.get('heading', []) + page.by_role.get('conclusion', [])
-                 if sum(len(r.text) for r in s.runs if _CJK_CH.search(r.text) and (r.bold or any(f.endswith((' Bold', ' Heavy')) for f in r.fonts))) > 0.5 * max(len(s.text), 1)]      # 个别关键词加粗不算：粗体字过半才警告
+                 if any(_CJK_CH.search(r.text) and (r.bold or any(f.endswith((' Bold', ' Heavy')) for f in r.fonts)) for r in s.runs)]
         if heavy:
             out.append(F(page.idx, 'C-13', 'W', '小标题 / 结论句用了大标题同款粗体：正文里除数字与个别关键词外不用 Bold，小标题用 Medium', shapes=heavy[:6]))
     for h in page.heroes:
