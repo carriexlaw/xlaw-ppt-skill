@@ -179,6 +179,7 @@ title / kicker 到 body 元素的间距不参与 S-02 的 {g, 2g, 3g} 判定：�
 | cover / agenda / section / closing / statement | 仅 roles、字体、颜色、字号下限、title 字间距；statement / section 另按 light 计入 C-22 的节奏序列；title 按 09 规则（cover / section 居中：\|center_x − page_cx\| ≤ 4pt，字号 45–64）；不计入节奏、变化、尺度、间距、容器、层级 |
 
 - C-29 agenda [W]：manifest 有 `image` 且 layout ∈ {5, 6}（形状按 §7 反算）；条目文字（body / heading）最大字号 ≥ 20
+- 加了全屏遮罩的背景图一律当背景：文字块按规则居中，不为了让开画面里的主体（船、楼）而偏移
 - C-28 statement [W]：`hero:big-label` 的字号按句子长度（汉字当量，标点不计）落在阶梯内：≤ 7 → 72；8–14 → 60；15–24 → 48–54；25–40 → 40；> 40 → 改要点页。兜底：hero 墨迹框宽 ∈ [45%, 60%] 页宽、高 ∈ [20%, 35%] 页高，中心与页面中心差 ≤ 5% 页宽 / 页高
 - statement 页不得有 `title` 为元标签；有实义的原标题用 `kicker`
 
@@ -264,11 +265,12 @@ kicker、conclusion 的存在与 manifest.subtitle / conclusion 一致。不重�
 - `hero:big-number` 的最大 run 必须是粗体
 
 ### C-14 颜色 [M]
-所有文字色、fill、line 的 hex ∈ palette 全集（mask 的颜色也须在 palette 内，透明度不限）。accent 色的连续 run 汉字当量 > accent_max_chars → 失败。
+所有文字色、fill、line 的 hex ∈ palette 全集。mask 例外：遮罩颜色取自图片自身主色（`scripts/mask_color.py`），不进 palette，透明度不限。accent 色的连续 run 汉字当量 > accent_max_chars → 失败。
 
 高亮色克制（第六轮，所有页类型）：
 - 单个非图片形状的 fill ∈ accent 且形状框面积 > `accent.fill_max_frac`（8%）× 页面面积 → 失败 [M]（全屏橙色章节页、大色块）
-- 内容页 accent 色文字字符数 / 本页文字字符数（不计 title / pagenum / source，总数 ≥ 20 才查）> `accent.text_max_frac`（35%；accent 色相为暖色 < 70° 或 > 300° 时取 `text_max_frac_warm` 25%）→ 警告 [W]
+- accent 为暖色（色相 < 70° 或 > 300°）时：内容页 accent 色文字字符数 / 本页文字字符数（不计 title / pagenum / source / 表格，总数 ≥ 20 才查）> `accent.text_max_frac_warm`（25%）→ 警告 [W]。冷色 accent 不查，沿用原规则（表格数据区按 07 用色）
+- 遮罩色相：mask 与其下图片的平均色色相差 > `accent.mask_hue_tol`（45°，两者饱和度都 > 0.12 才查）→ 警告 [W]
 
 ### C-15 图上文字对比度 [M]
 对每个文本形状 T，若其形状框与任一 image 形状框相交：
@@ -457,7 +459,7 @@ foreground 文本形状（title、pagenum、source、表格除外）：单个段
 ```yaml
 raster_cell: 4
 ink: {cjk: 1.0, latin: 0.55, space: 0.3, line_spacing: 1.2, inset: 7.2, arrow: 1.0, percent: 0.9, permille: 1.25}   # run 有字间距（spc）时每字再加 spc/100 pt
-accent: {fill_max_frac: 0.08, text_max_frac: 0.35, text_max_frac_warm: 0.25}   # C-14 高亮色克制
+accent: {fill_max_frac: 0.08, text_max_frac_warm: 0.25, mask_hue_tol: 45}   # C-14 高亮色克制 / 遮罩色相
 density: {light_chars: 120, medium_chars: 300, max_chars: 480,
           light_elems: 8, medium_elems: 20, void_hero_chars: 80}
 hero: {area_frac: 0.30}                          # 只对 hero:table / hero:image 生效（font_mult 3.0 已删，第五轮）

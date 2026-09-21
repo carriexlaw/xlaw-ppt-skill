@@ -32,6 +32,7 @@ description: 带图的 PPT 视觉推理 skill：从内容与语境倒推视觉�
 | `validate_design.py` | 14 的全部 C-xx；`--list` 列出检查项与阈值来源 |
 | `roles.py` | 形状角色校验，validate 内部调用，也可单独跑 |
 | `icon.py` | 开源 icon 的 SVG → 重着色 → 4× PNG（cairosvg，缺 libcairo 时回退 PyMuPDF）；支持 Phosphor duotone 双色 |
+| `mask_color.py` | 由图片主色算遮罩颜色（深 / 浅），遮罩不跟主题色 |
 | `postfix.py` | 生成后的 XML 后处理：数字 / 英文写成英文字体（a:latin）、bullet 135% + accent；`node build.js` 之后、渲染与校验之前必跑 |
 
 ## 产出文件（14 §0）
@@ -92,7 +93,7 @@ python scripts/render_deck.py --check
    - 每个 run 显式给 `fontFace`、`fontSize`、`color`；字号只取 `type_scale` 里的值；颜色只取色板里的值。行距用固定 pt：`lineSpacing: 1.2 × fontSize`，不用 `lineSpacingMultiple`（倍数相对字体自带行高，中文字体会渲染成约 1.46 × 字号，多行大字压到下一个元素，也和 inkbox 的估算对不上）。
    - pptxgenjs 坐标单位是英寸，manifest 与校验器单位是 pt：`inch = pt / 72`。页面 960×540pt 对应 `LAYOUT_WIDE`（13.333×7.5in）。
    - **每个 `addImage` 必须带 `sizing: {type: 'cover', w, h}`，禁止靠 w / h 直接拉伸**（C-35 会查形状与像素的宽高比）。pptxgenjs 在 Node 里读不到像素尺寸，它把 `w / h` 当作图片自身尺寸来算裁剪，所以 `w / h` 必须按图片自身宽高比给，`sizing.w / h` 才是页面上的框（`layout.py` 的输出里已经给出 `img_w / img_h`）。
-   - 遮罩是 `addShape(rect, { fill: { color, transparency } , objectName: 'mask' })`。
+   - 遮罩是 `addShape(rect, { fill: { color, transparency } , objectName: 'mask' })`；颜色用 `python scripts/mask_color.py <图>` 从图片自身主色算（浅色遮罩加 `--light`），不用主题色；加了全屏遮罩的图当背景，文字块照常居中。
    - 单个段落 ≤ 100 汉字当量且 ≤ 4 行，单个文本框 ≤ 200 字（C-36）；超出拆成多个 body 或改结构，不是缩字号。
    - 布局由 `scripts/layout.py` 的尺度循环计算（`14` §4c），build.js 不得手写内容元素坐标。元素树的节点：text（可带 `unit`）/ icon / tag / image / chart / table / box / vtimeline / pair（紧贴对：数字 + 释义、icon + 要点、色块 + 序列名、大括号 + items）/ row（并列格，`balance` 让容器宽度随内容、`stretch` 对齐高度）/ stack / card（可带压角的圆形或胶囊 tag）/ timeline（横向时间线，含说明容器）；列加 `region: true`、顶层节点加 `region: "bottom"` 输出贴边区域背景；列加 `edge` 输出满页高边图（配图方式 5 / 6）：字号档由密度档定（S-01），间距 g 由剩余空间算出（S-02），内容块横向填满、竖向填满或居中（S-03），容器贴内容（S-04），无洞（S-05），对齐线 ≤ 3（S-06）。
      ```bash

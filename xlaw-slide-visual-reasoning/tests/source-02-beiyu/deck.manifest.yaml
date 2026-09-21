@@ -29,12 +29,12 @@ pages:
       layout: 1
       side: full
       source: pexels
-      id: "6804612"
-      photographer: cottonbro studio
-      url: https://www.pexels.com/photo/workstations-of-a-startup-software-company-6804612/
-      query: software office computer screen workspace modern
-      candidates_viewed: 22
-      reason: 办公室里一排亮着的显示器和工位，是协作软件最直观的使用场景；无人物无可读 logo，偏暗，压深色遮罩后标题可读
+      id: "28056040"
+      photographer: Artem Zhukov
+      url: https://www.pexels.com/photo/the-view-of-london-from-the-top-of-a-building-28056040/
+      query: city skyline dusk aerial blue hour
+      candidates_viewed: 30
+      reason: 蓝调时分的城市天际线，上半是干净天空，标题落在天空与楼群交界；办公室工位图压遮罩后只剩窗户且桌面杂乱，换成天际线表达商业语境
   - page: 2
     type: agenda
     image:
@@ -56,12 +56,12 @@ pages:
       layout: 1
       side: full
       source: pexels
-      id: "34617907"
-      photographer: 马 力
-      url: https://www.pexels.com/photo/stunning-twilight-cityscape-over-expansive-urban-landscape-34617907/
-      query: city skyline dusk aerial blue hour
+      id: "11407710"
+      photographer: Michael Smith
+      url: https://www.pexels.com/photo/aerial-view-of-the-sea-11407710/
+      query: dark blue ocean surface texture aerial calm
       candidates_viewed: 24
-      reason: 蓝调时分城市全景，上方三分之二是天空，三行结论落在天空里，灯火留在下沿；天际线表达商业语境
+      reason: 均匀深蓝海面纹理，无主体，压同色系深蓝遮罩后三行大字可读；封面已是天际线，这里不重复
   - page: 4
     type: section
   - page: 5

@@ -49,6 +49,7 @@ function title(s, box, t, color = C.black) { text(s, mixed(t, { fontFace: undefi
 function image(s, path, box, name) {
   s.addImage({ path, x: P(box.x), y: P(box.y), w: P(box.img_w), h: P(box.img_h), sizing: { type: 'cover', w: P(box.w), h: P(box.h) }, objectName: name });
 }
+const maskOf = path => execSync(`python3 ../../scripts/mask_color.py ${path}`).toString().trim();      // 遮罩取图片自身主色压暗，不跟主题色
 const dimsOf = path => execSync(`python3 -c "from PIL import Image;im=Image.open('${path}');print(im.size[0],im.size[1])"`).toString().trim().split(' ').map(Number);
 function fullImage(s, path, name) {
   const [pw, ph] = dimsOf(path);
@@ -137,11 +138,11 @@ let s;
 // ================================================================ 1 封面：8 个字 → 54；副标题细体 24；署名贴底
 s = pres.addSlide();
 fullImage(s, '_qa/selected/01.jpg', 'image:full-bleed');
-rect(s, { x: 0, y: 0, w: 960, h: 540 }, { fill: C.dark, transparency: 35, name: 'mask' });
+rect(s, { x: 0, y: 0, w: 960, h: 540 }, { fill: maskOf('_qa/selected/01.jpg'), transparency: 45, name: 'mask' });
 text(s, '把增长交还给留存', { x: 180, y: 200, w: 600, h: 64.8, size: 54 }, { face: ZH.bold, bold: true, color: C.white, align: 'center', spc: 5.4, name: 'title' });
 text(s, mixed('北屿协作 2026 前三季度产品复盘与 2027 规划'), { x: 130, y: 282, w: 700, h: 28.8, size: 24 }, { color: C.white, align: 'center', name: 'kicker' });
 text(s, mixed('产品与增长中心 · 2026 年 10 月'), { x: 180, y: 476, w: 600, h: 24, size: 20 }, { color: C.white, align: 'center', name: 'body' });
-s.addNotes('Photo: cottonbro studio / Pexels — https://www.pexels.com/photo/workstations-of-a-startup-software-company-6804612/');
+s.addNotes('Photo: Artem Zhukov / Pexels — https://www.pexels.com/photo/the-view-of-london-from-the-top-of-a-building-28056040/');
 
 // ================================================================ 2 目录：配图方式 5（左，28% 宽，满高）
 s = pres.addSlide();
@@ -162,7 +163,7 @@ s.addNotes('Photo: Scott Webb / Pexels — https://www.pexels.com/photo/low-angl
 function statement(path, maskT, lines, size, note, kicker, dy = 0) {
   const s = pres.addSlide();
   fullImage(s, path, 'image:full-bleed');
-  rect(s, { x: 0, y: 0, w: 960, h: 540 }, { fill: C.dark, transparency: maskT, name: 'mask' });
+  rect(s, { x: 0, y: 0, w: 960, h: 540 }, { fill: maskOf(path), transparency: maskT, name: 'mask' });
   const w = 640, h = lines.length * size * LH, kh = kicker ? 24 + 24 * LH : 0, y = (540 - h - kh) / 2 + dy;
   text(s, null, { x: (960 - w) / 2, y, w, h, size }, { face: ZH.bold, bold: true, color: C.white, align: 'center', name: 'hero:big-label', paras: lines });
   if (kicker) text(s, mixed(kicker), { x: (960 - w) / 2, y: y + h + 24, w, h: 24 * LH, size: 24 }, { color: C.light, align: 'center', name: 'kicker' });
@@ -173,7 +174,7 @@ const HL = { color: C.light };
 const bn = (t, o = {}) => num(t, Object.assign({ bold: true }, o));
 // 3 核心结论：33 字 → 40，三行，折在标点处并省略行尾标点
 statement('_qa/selected/03.jpg', 40, [[{ text: '买量换不来增长了' }], [{ text: '获客成本两年' }, { text: '翻了一倍', o: HL }], [{ text: '而留下来的老团队贡献了' }, { text: '九成收入', o: HL }]], 40,
-  'Photo: 马 力 / Pexels — https://www.pexels.com/photo/stunning-twilight-cityscape-over-expansive-urban-landscape-34617907/', null, -60);      // 文字块上移到天空里，让开下沿的城市灯火
+  'Photo: Michael Smith / Pexels — https://www.pexels.com/photo/aerial-view-of-the-sea-11407710/');
 
 // ================================================================ 章节页
 function section(no, t) {
@@ -349,13 +350,13 @@ content(12, s => {
 // ================================================================ 13 英文引言：18 汉字当量 → 48，三行；原标题降为辅助行
 s = pres.addSlide();
 fullImage(s, '_qa/selected/13.jpg', 'image:full-bleed');
-rect(s, { x: 0, y: 0, w: 960, h: 540 }, { fill: C.dark, transparency: 40, name: 'mask' });
+rect(s, { x: 0, y: 0, w: 960, h: 540 }, { fill: maskOf('_qa/selected/13.jpg'), transparency: 45, name: 'mask' });
 {
-  const size = 48, w = 580, x = (960 - w) / 2, qh = 3 * size * LH, total = qh + 16 + 18 * LH + 20 + 24 * LH, y0 = (540 - total) / 2;
-  const q = ['Great for me.', 'Useless until', 'my team shows up.'].map(t => [{ text: t, o: { fontFace: EN_DEMI, bold: true } }]);
-  text(s, null, { x, y: y0, w, h: qh, size }, { face: EN_DEMI, bold: true, color: C.white, name: 'hero:big-label', paras: q });
-  text(s, [{ text: '— App Store review, Singapore, Aug 2026', o: { fontFace: EN } }], { x, y: y0 + qh + 16, w, h: 18 * LH, size: 18 }, { face: EN, color: C.white, name: 'body' });
-  text(s, '用户原话：团队不来，工具没用', { x, y: y0 + qh + 16 + 18 * LH + 20, w, h: 24 * LH, size: 24 }, { face: ZH.light, color: C.light, name: 'kicker' });
+  const size = 48, w = 560, x = (960 - w) / 2, qh = 2 * size * LH, total = qh + 16 + 18 * LH + 20 + 24 * LH, y0 = (540 - total) / 2;
+  const q = ['Great for me. Useless', 'until my team shows up.'].map(t => [{ text: t, o: { fontFace: EN_DEMI, bold: true } }]);
+  text(s, null, { x, y: y0, w, h: qh, size }, { face: EN_DEMI, bold: true, color: C.white, align: 'center', nowrap: true, name: 'hero:big-label', paras: q });
+  text(s, [{ text: '— App Store review, Singapore, Aug 2026', o: { fontFace: EN } }], { x, y: y0 + qh + 16, w, h: 18 * LH, size: 18 }, { face: EN, color: C.white, align: 'center', name: 'body' });
+  text(s, '用户原话：团队不来，工具没用', { x, y: y0 + qh + 16 + 18 * LH + 20, w, h: 24 * LH, size: 24 }, { face: ZH.light, color: C.light, align: 'center', name: 'kicker' });
 }
 s.addNotes('Photo: Magda Ehlers / Pexels — https://www.pexels.com/photo/lonely-sailboat-on-vast-open-ocean-38201634/');
 
@@ -511,7 +512,7 @@ content(22, s => {
 section('04', '明年怎么打');                                                                          // 23
 // 24 一句话页：15 字 → 54，两行；原标题降为辅助行
 statement('_qa/selected/24.jpg', 55, [[{ text: '让每个新团队' }], [{ text: '在 ' }, bn('7 ', HL), { text: '天内', o: HL }, { text: '来齐 ' }, bn('3 ', HL), { text: '个人', o: HL }]], 54,
-  'Photo: Miguel Rivera / Pexels — https://www.pexels.com/photo/boats-in-tranquil-waters-at-el-albir-spain-35104240/', '2027 年只做一件事', 96);      // 文字块下移，让开画面中部的两条船
+  'Photo: Miguel Rivera / Pexels — https://www.pexels.com/photo/boats-in-tranquil-waters-at-el-albir-spain-35104240/', '2027 年只做一件事');
 
 // ================================================================ 25 三层架构：三张填充卡纵向叠放（层名 + 胶囊节点）；下沉的两项 accent
 content(25, s => {
@@ -677,7 +678,7 @@ rect(s, { x: 0, y: 0, w: 960, h: 540 }, { fill: C.dark, name: 'bg' });
 text(s, '谢谢', { x: 180, y: 204, w: 600, h: 72, size: 60 }, { face: ZH.bold, bold: true, color: C.white, align: 'center', spc: 6, name: 'title' });
 text(s, [{ text: '数据口径：除特别说明外，均来自北屿数据平台，截至 ' }, { text: '2026 ', o: { fontFace: EN } }, { text: '年 ' }, { text: '9 ', o: { fontFace: EN } }, { text: '月 ' }, { text: '30 ', o: { fontFace: EN } }, { text: '日' }],
   { x: 100, y: 440, w: 760, h: 16.8, size: 14 }, { color: C.white, align: 'center', name: 'body' });
-text(s, [{ text: '图片：' }, { text: 'Pexels', o: { fontFace: EN } }, { text: '（' }, { text: 'cottonbro studio, Scott Webb, ', o: { fontFace: EN } }, { text: '马 力' }, { text: ', Magda Ehlers, Miguel Rivera, ', o: { fontFace: EN } }, { text: '준섭 윤' }, { text: '）' }],
+text(s, [{ text: '图片：' }, { text: 'Pexels', o: { fontFace: EN } }, { text: '（' }, { text: 'Artem Zhukov, Scott Webb, Michael Smith, Magda Ehlers, Miguel Rivera, ', o: { fontFace: EN } }, { text: '준섭 윤' }, { text: '）' }],
   { x: 100, y: 470, w: 760, h: 14.4, size: 12 }, { color: C.muted, align: 'center', name: 'source' });
 
 pres.writeFile({ fileName: 'deck.pptx' }).then(f => { console.log('wrote', f); if (failed.length) { console.error('layout 失败的页：', failed.join(', ')); process.exit(2); } });
