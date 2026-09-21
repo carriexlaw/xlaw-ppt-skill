@@ -1637,7 +1637,7 @@ def c14_colors(ctx, page):
     for s in page.shapes:
         if s.is_picture:
             continue
-        if s.fill and s.fill not in pal:
+        if s.fill and s.fill not in pal and s.role != 'mask':          # 遮罩颜色取自图片自身的主色系（11 配图方式），不跟 palette
             bad.add(f'{s.name} fill {s.fill}')
         if s.line and s.line not in pal:
             bad.add(f'{s.name} line {s.line}')
@@ -1664,7 +1664,49 @@ def c14_colors(ctx, page):
                     break
             else:
                 cur, cur_para = 0, None
+    # 高亮色克制（01 Color，第六轮）：accent 不铺大面积；一页里 accent 文字不占多数
+    ac = ctx.th.get('accent', {})
+    page_area = ctx.page_w * ctx.page_h
+    for s in page.shapes:
+        if not s.is_picture and s.fill in ctx.accent and s.box.w * s.box.h > ac.get('fill_max_frac', 0.08) * page_area:
+            out.append(F(page.idx, 'C-14', 'M', '高亮色铺了大面积（全屏 / 大色块）：饱和的高亮色不作背景色，改用低饱和的 tertiary / secondary 或中性色',
+                         shape=s.name, frac=round(s.box.w * s.box.h / page_area, 2), limit=ac.get('fill_max_frac', 0.08)))
+    # 遮罩色相要落在图片主色的色系里：不拿主题色去压图（暖棕遮罩压蓝色海面会发灰发棕）
+    for mk in page.masks:
+        img = next((i for i in page.images if i.box.intersects(mk.box)), None)
+        im = page.image_pixels(img) if img is not None and mk.fill else None
+        if im is None:
+            continue
+        import colorsys
+        r, g, b = [v / 255 for v in im.resize((32, 32)).resize((1, 1)).getpixel((0, 0))]
+        ih, _, isat = colorsys.rgb_to_hls(r, g, b)
+        mr, mg, mb = (int(mk.fill[i:i + 2], 16) / 255 for i in (0, 2, 4))
+        mh, ml, msat = colorsys.rgb_to_hls(mr, mg, mb)
+        dh = abs(ih - mh) * 360
+        dh = min(dh, 360 - dh)
+        if isat > 0.12 and msat > 0.12 and 0.04 < ml < 0.9 and dh > ac.get('mask_hue_tol', 45):
+            out.append(F(page.idx, 'C-14', 'W', '遮罩颜色不在图片主色的色系里：遮罩取图片自身主色压暗（或提亮），不跟随主题色',
+                         mask=mk.fill, image_hue=round(ih * 360), mask_hue=round(mh * 360), tol=ac.get('mask_hue_tol', 45)))
+    tot = acc = 0
+    for s in page.shapes:
+        if s.role in ('title', 'pagenum', 'source') or s.is_table:       # 表格数据区按 07 的规则用色，不计入占比
+            continue
+        for r in s.runs:
+            n = len(r.text.strip())
+            tot += n
+            acc += n if r.color in ctx.accent else 0
+    h = _hue(next(iter(ctx.accent), '000000'))
+    lim = ac.get('text_max_frac_warm', 0.25)
+    if (h < 70 or h > 300) and page.type == 'content' and tot >= 20 and acc / tot > lim:      # 只约束暖色 accent；冷色 accent 沿用原规则
+        out.append(F(page.idx, 'C-14', 'W', '高亮色文字占比过高：高亮色留给本页结论里最重要的数字 / 词，论据数字、释义、小标题用深色或低饱和色（暖色高亮更要少用）',
+                     accent_frac=round(acc / tot, 2), limit=lim))
     return out
+
+
+def _hue(hex_):
+    import colorsys
+    r, g, b = (int(hex_[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return colorsys.rgb_to_hls(r, g, b)[0] * 360
 
 
 def _rel_lum(rgb):

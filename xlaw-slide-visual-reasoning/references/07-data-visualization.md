@@ -42,6 +42,7 @@
 
 占比
 
+- 说「所占比例」「由几部分组成」时用 Doughnut / 饼图 / 单条 bar 组成图，不用柱状图：柱状图表现的是数值的变化趋势或大小比较，不是结构组成
 - 说「所占比例」时优先用图表：Doughnut / 饼图 / 单条 bar 组成图
 - pptxgenjs 默认出 doughnut；要 3D 饼图需后处理 XML，先问用户
 
@@ -52,7 +53,16 @@
 - 表格里的数字一律英文字体 Demi Bold
 - 密度低时数据区可用 accent；密度越高饱和度越低，重页数据用正文色
 
+对比
+
+- 两个数的前后对比不只有「大数字 → 大数字」一种写法，全 deck ≤ 3 页；其余用小表格（现在 / 调整后两列）、成对条形图、前后两条堆叠条
+- 用箭头对比时把对比维度标出来（时间、口径），标在各自数字上方；前值用深色，后值（结论）才用 accent
+- 每个数据都要有小标题级的名称和看得见的单位（01 Visual Hierarchy）
+
 ### Anti-patterns
+- Columns for Composition：构成 / 占比画成柱状图
+- Naked Number：放大的数字没有名称，单位藏在小字里
+- Arrow Pair Everywhere：每页都是「加粗大数字 → 加粗大数字」
 
 - Every series has a saturated color
 - Tiny labels

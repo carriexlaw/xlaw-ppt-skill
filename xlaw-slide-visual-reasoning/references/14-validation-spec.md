@@ -138,7 +138,7 @@ pptx 文本框的外接矩形通常大于文字。间距、内容块、容器、
 for 每个文本形状:
   inner_w = shape.w − 左右内边距（默认 7.2pt×2，从 bodyPr 读到则用实际值）
   对每个段落:
-    行宽估算 = Σ 字宽；字宽 = CJK: size×1.0；拉丁字母数字: size×0.55；空格: size×0.3；run 有字间距（rPr spc，百分之一 pt）时每字再加 spc / 100
+    行宽估算 = Σ 字宽；字宽 = CJK: size×1.0；拉丁字母数字: size×0.55；空格: size×0.3；箭头（→ ← ↑ ↓ ↔ ⇒）: size×1.0（英文字体没有这些字形，渲染回退到中文字体的全角箭头）；%: size×0.9；‰: size×1.25；run 有字间距（rPr spc，百分之一 pt）时每字再加 spc / 100
     行数 = ceil(行宽 / inner_w)，空段落算 1 行
     行高 = size × 行距倍数（段落 lnSpc，缺省 1.2）
   ink_h = Σ 行高 + 段前段后
@@ -179,6 +179,7 @@ title / kicker 到 body 元素的间距不参与 S-02 的 {g, 2g, 3g} 判定：�
 | cover / agenda / section / closing / statement | 仅 roles、字体、颜色、字号下限、title 字间距；statement / section 另按 light 计入 C-22 的节奏序列；title 按 09 规则（cover / section 居中：\|center_x − page_cx\| ≤ 4pt，字号 45–64）；不计入节奏、变化、尺度、间距、容器、层级 |
 
 - C-29 agenda [W]：manifest 有 `image` 且 layout ∈ {5, 6}（形状按 §7 反算）；条目文字（body / heading）最大字号 ≥ 20
+- 加了全屏遮罩的背景图一律当背景：文字块按规则居中，不为了让开画面里的主体（船、楼）而偏移
 - C-28 statement [W]：`hero:big-label` 的字号按句子长度（汉字当量，标点不计）落在阶梯内：≤ 7 → 72；8–14 → 60；15–24 → 48–54；25–40 → 40；> 40 → 改要点页。兜底：hero 墨迹框宽 ∈ [45%, 60%] 页宽、高 ∈ [20%, 35%] 页高，中心与页面中心差 ≤ 5% 页宽 / 页高
 - statement 页不得有 `title` 为元标签；有实义的原标题用 `kicker`
 
@@ -264,7 +265,12 @@ kicker、conclusion 的存在与 manifest.subtitle / conclusion 一致。不重�
 - `hero:big-number` 的最大 run 必须是粗体
 
 ### C-14 颜色 [M]
-所有文字色、fill、line 的 hex ∈ palette 全集（mask 的颜色也须在 palette 内，透明度不限）。accent 色的连续 run 汉字当量 > accent_max_chars → 失败。
+所有文字色、fill、line 的 hex ∈ palette 全集。mask 例外：遮罩颜色取自图片自身主色（`scripts/mask_color.py`），不进 palette，透明度不限。accent 色的连续 run 汉字当量 > accent_max_chars → 失败。
+
+高亮色克制（第六轮，所有页类型）：
+- 单个非图片形状的 fill ∈ accent 且形状框面积 > `accent.fill_max_frac`（8%）× 页面面积 → 失败 [M]（全屏橙色章节页、大色块）
+- accent 为暖色（色相 < 70° 或 > 300°）时：内容页 accent 色文字字符数 / 本页文字字符数（不计 title / pagenum / source / 表格，总数 ≥ 20 才查）> `accent.text_max_frac_warm`（25%）→ 警告 [W]。冷色 accent 不查，沿用原规则（表格数据区按 07 用色）
+- 遮罩色相：mask 与其下图片的平均色色相差 > `accent.mask_hue_tol`（45°，两者饱和度都 > 0.12 才查）→ 警告 [W]
 
 ### C-15 图上文字对比度 [M]
 对每个文本形状 T，若其形状框与任一 image 形状框相交：
@@ -337,6 +343,9 @@ pptxgenjs 图表设最小内边距：`plotArea` 铺满、legend 放图内右上�
 - title 字号由 layout 定：该档区间（S-01）内墨迹宽 ≤ 84% 标题宽的最大值（含 7.5% 字间距）；标题过长（占了大半页宽）就继续往下缩，可低于该档区间，不低于 title_size.min。S-01 的 title 按档 [W] 对这种长标题豁免
 - 正文放大上限按字数档取（`scale.bands.*.body_cap`）：元素多但字少的页（如时间线）按元素数落在重档，正文仍可放大
 - 紧贴对（pair）：左项取自身墨迹宽，间距 0.35 × 正文（< 0.8 g_min，校验器一定合并成一个元素）
+- text 节点的 `unit`：单位与数字同一个文本框、紧跟数字、字号 = 数字释义档（输出 `unit_size`）；释义比格子宽时不用 pair，把释义作为同组的下一个节点放在数字下方（间距 g）
+- icon 的 `align: center`：在所在格内居中；`box`：固定高的占位框（自绘小表格 / 对比条）；`vtimeline`：竖向时间线（时间 | 轴线 + 圆点 | 内容），节点多且每条内容长时用
+- 预检（失败即 ok = false，给出改法）：内容块左 / 右沿离版心 > e（最右列是左对齐的窄内容、最左列是居中的窄内容；该侧有边图或侧边区域背景时不查）；标题墨迹压到右侧区域背景上（改贴底区域，或给 title.w 缩一档）
 - row：格间距 2g / 3g；`balance` 调各格宽度让自然高度相等（容器大小由内容决定，横排只对齐高度）
 - 配图方式 5 / 6 的边图列满页高贴边，不再随内容块高
 
@@ -449,7 +458,8 @@ foreground 文本形状（title、pagenum、source、表格除外）：单个段
 
 ```yaml
 raster_cell: 4
-ink: {cjk: 1.0, latin: 0.55, space: 0.3, line_spacing: 1.2, inset: 7.2}   # run 有字间距（spc）时每字再加 spc/100 pt
+ink: {cjk: 1.0, latin: 0.55, space: 0.3, line_spacing: 1.2, inset: 7.2, arrow: 1.0, percent: 0.9, permille: 1.25}   # run 有字间距（spc）时每字再加 spc/100 pt
+accent: {fill_max_frac: 0.08, text_max_frac_warm: 0.25, mask_hue_tol: 45}   # C-14 高亮色克制 / 遮罩色相
 density: {light_chars: 120, medium_chars: 300, max_chars: 480,
           light_elems: 8, medium_elems: 20, void_hero_chars: 80}
 hero: {area_frac: 0.30}                          # 只对 hero:table / hero:image 生效（font_mult 3.0 已删，第五轮）

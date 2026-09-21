@@ -1,6 +1,6 @@
 # 14-validation-spec.md §8 默认值，原样落盘。validate_design.py 不写死任何数值。
 raster_cell: 4
-ink: {cjk: 1.0, latin: 0.55, space: 0.3, line_spacing: 1.2, inset: 7.2}   # run 有字间距（spc）时每字再加 spc/100 pt
+ink: {cjk: 1.0, latin: 0.55, space: 0.3, line_spacing: 1.2, inset: 7.2, arrow: 1.0, percent: 0.9, permille: 1.25}   # run 有字间距（spc）时每字再加 spc/100 pt
 density: {light_chars: 120, medium_chars: 300, max_chars: 480,
           light_elems: 8, medium_elems: 20, void_hero_chars: 80}
 hero: {area_frac: 0.30}                          # 只对 hero:table / hero:image 生效（font_mult 3.0 已删，第五轮）
@@ -34,6 +34,7 @@ anchor: {title_tol: 2, mask_edge_frac: 0.05, mask_edge_vtol: 4, image_center_fra
 type_scale_tol: 0.5
 max_sizes_per_page: 5                             # 不计 title / source / pagenum
 accent_max_chars: 20
+accent: {fill_max_frac: 0.08, text_max_frac_warm: 0.25, mask_hue_tol: 45}   # C-14（第六轮）：accent 填充的单个形状 ≤ 8% 页面面积 [M]；暖色 accent 的文字占本页文字（不计表格）≤ 25% [W]，冷色 accent 不查；遮罩色相与图片主色相差 ≤ 45° [W]
 contrast: {body: 4.5, large: 3.0, large_pt: 18, large_bold_pt: 14, percentile: 80}
 deck: {series_max: 0.40, heavy_max: 0.40, subtitle_max: 0.60, subtitle_run: 4,
        conclusion_run: 2, conclusion_max: 0.50, noframe_min: 0.333}

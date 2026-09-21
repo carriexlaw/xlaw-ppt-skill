@@ -1,0 +1,460 @@
+# 北屿协作 2026 前三季度产品复盘与 2027 规划（季度经营会投屏，管理层，论证型；品牌橙 EE6A2C；轻快、克制）
+deck:
+  page: {w: 960, h: 540}
+  margins: {l: 48, r: 48, t: 40, b: 40}
+  title_anchor: {x: 48, y: 40, tol: 2}
+  pagenum_anchor: {x: 880, y: 508, tol: 2}     # 33 页 > 20：内容页放页码
+  type_scale: [10.5, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 54, 60, 72]
+  title_size: {min: 28, max: 40}
+  min_size: 10.5
+  fonts: [Source Han Sans CN, Avenir Next]
+  fonts_latin: [Avenir Next]
+  font_pairs: {Source Han Sans CN Bold: Avenir Next, Source Han Sans CN Medium: Avenir Next Medium, Source Han Sans CN Light: Avenir Next}
+  palette:
+    accent: [EE6A2C]
+    secondary: [2E1F17, 5A3420, A3501F]
+    tertiary: [FBF5EC, F6F2EC]
+    accent_light: [FFB48F]
+    data_muted: [BFB1A8]
+    neutral: ['000000', FFFFFF, '333333', 7A7A7A, 4A4A4A, F4F3F2, D9D2CC]
+  accent_max_chars: 20
+  shape_language: {corner: {small: full, medium: 12, large: 0}, stroke: 0.75}
+  tone: argument
+
+pages:
+  - page: 1
+    type: cover
+    image:
+      role: full-bleed
+      layout: 1
+      side: full
+      source: pexels
+      id: "28056040"
+      photographer: Artem Zhukov
+      url: https://www.pexels.com/photo/the-view-of-london-from-the-top-of-a-building-28056040/
+      query: city skyline dusk aerial blue hour
+      candidates_viewed: 30
+      reason: 蓝调时分的城市天际线，上半是干净天空，标题落在天空与楼群交界；办公室工位图压遮罩后只剩窗户且桌面杂乱，换成天际线表达商业语境
+  - page: 2
+    type: agenda
+    image:
+      role: atmosphere
+      layout: 5
+      side: left
+      source: pexels
+      id: "614228"
+      photographer: Scott Webb
+      url: https://www.pexels.com/photo/low-angle-photography-of-curtain-wall-614228/
+      query: skyscraper glass facade looking up blue sky
+      candidates_viewed: 19
+      reason: 单座玻璃塔楼仰拍且居中，裁成 28% 竖条仍是一根向上的线；商务语境，与封面的室内场景区分开
+  - page: 3
+    type: statement
+    message: 买量换不来增长，老团队贡献九成收入
+    image:
+      role: full-bleed
+      layout: 1
+      side: full
+      source: pexels
+      id: "11407710"
+      photographer: Michael Smith
+      url: https://www.pexels.com/photo/aerial-view-of-the-sea-11407710/
+      query: dark blue ocean surface texture aerial calm
+      candidates_viewed: 24
+      reason: 均匀深蓝海面纹理，无主体，压同色系深蓝遮罩后三行大字可读；封面已是天际线，这里不重复
+  - page: 4
+    type: section
+  - page: 5
+    type: content
+    message: 规模四项指标还在涨，但 ARR 增速从 46% 掉到 18%
+    pattern: kpi-row-plus-compare
+    focus: {object: 大盘的四项规模指标, form: numbers, count: 4}
+    density: light
+    container: none
+    columns: "1"
+    g: 18.15
+    source_chars: 78
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: full
+  - page: 6
+    type: content
+    message: 买量新增连续四个季度下滑，被自然流量与邀请反超
+    pattern: bar-chart
+    focus: {object: 两种来源的季度新增趋势, form: chart, count: 1}
+    density: light
+    container: none
+    columns: "1:1"
+    g: 26.43
+    source_chars: 150
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: null
+    visual_side: left
+    chart: {focus_series: 买量}
+  - page: 7
+    type: content
+    message: 获客成本翻倍背后是渠道涨价、竞品投放、转化下降三个原因
+    pattern: reasons-plus-data
+    focus: {object: 获客成本翻倍的三个原因, form: headings, count: 3}
+    density: medium
+    container: none
+    columns: "3:2"
+    g: 15.53
+    source_chars: 136
+    contrast: strong
+    title_pos: base
+    subtitle: true
+    conclusion: false
+    series: null
+    visual_side: right
+  - page: 8
+    type: content
+    message: 九成收入来自存量团队
+    pattern: doughnut
+    focus: {object: 收入的客户来源构成, form: chart, count: 1}
+    density: light
+    container: none
+    columns: "1:1"
+    g: 27.0
+    source_chars: 68
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: null
+    visual_side: left
+    chart: {focus_series: 存量团队续费}
+  - page: 9
+    type: section
+  - page: 10
+    type: content
+    message: 最大的流失发生在邀请第二个人这一步
+    pattern: funnel
+    focus: {object: 新团队从注册到付费的漏斗, form: chart, count: 1}
+    density: light
+    container: none
+    columns: "3:2"
+    g: 25.6
+    source_chars: 124
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: null
+    visual_side: right
+    chart: {focus_series: 邀请到第 2 名成员}
+  - page: 11
+    type: content
+    message: 邀请成功的团队留存与转化高出一个量级
+    pattern: comparison-cards
+    focus: {object: 邀请成功团队的留存与付费转化, form: numbers, count: 2}
+    density: medium
+    container: stroke
+    columns: "1"
+    g: 24.0
+    source_chars: 62
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: none
+  - page: 12
+    type: content
+    message: 付费团队是三类，运营类续费率最低
+    pattern: grouped-categories
+    focus: {object: 三类付费团队, form: headings, count: 3}
+    density: medium
+    container: none
+    columns: "1"
+    g: 22.1
+    source_chars: 134
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: null
+    visual_side: none
+  - page: 13
+    type: statement
+    message: 团队不来，工具没用
+    image:
+      role: full-bleed
+      layout: 1
+      side: full
+      source: pexels
+      id: "38201634"
+      photographer: Magda Ehlers
+      url: https://www.pexels.com/photo/lonely-sailboat-on-vast-open-ocean-38201634/
+      query: lone boat aerial vast empty sea minimal
+      candidates_viewed: 11
+      reason: 空海面上只有一叶孤帆，对应「团队不来」；蓝灰色调与其它页的海面一致，帆在右中，引言第二行行尾停在帆前
+  - page: 14
+    type: content
+    message: 三类用户说的都是同一件事：人齐不齐
+    pattern: quote-cards
+    focus: {object: 三位受访者, form: headings, count: 3}
+    density: light
+    container: stroke
+    columns: "1"
+    g: 30.0
+    source_chars: 108
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: none
+  - page: 15
+    type: content
+    message: Android 四项指标垫底，工单占近一半
+    pattern: comparison-table
+    focus: {object: 四端的六项体验指标, form: table, count: 1}
+    density: medium
+    container: none
+    columns: "1"
+    g: 16
+    source_chars: 187
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: null
+    visual_side: full
+  - page: 16
+    type: statement
+    message: 问题在拉新之后的 7 天
+  - page: 17
+    type: section
+  - page: 18
+    type: content
+    message: 引导改版把创建率和邀请率都提了上来，但接受率只有 38%
+    pattern: kpi-pros-cons
+    focus: {object: 新手引导改版的三项结果, form: numbers, count: 3}
+    density: medium
+    container: stroke
+    columns: "1"
+    g: 14.9
+    source_chars: 203
+    contrast: restrained
+    title_pos: base
+    subtitle: true
+    conclusion: false
+    series: initiative
+    visual_side: none
+  - page: 19
+    type: content
+    message: 模板让留存翻倍，但流失最高的运营类模板最少
+    pattern: kpi-pros-cons
+    focus: {object: 模板中心的三项结果, form: numbers, count: 3}
+    density: medium
+    container: stroke
+    columns: "1"
+    g: 14.9
+    source_chars: 192
+    contrast: restrained
+    title_pos: base
+    subtitle: true
+    conclusion: false
+    series: initiative
+    visual_side: none
+  - page: 20
+    type: content
+    message: AI 助手带动扩容，但接口成本吃掉订阅费三成
+    pattern: kpi-pros-cons
+    focus: {object: AI 助手内测的三项结果, form: numbers, count: 3}
+    density: medium
+    container: stroke
+    columns: "1"
+    g: 14.9
+    source_chars: 184
+    contrast: restrained
+    title_pos: base
+    subtitle: true
+    conclusion: false
+    series: initiative
+    visual_side: none
+  - page: 21
+    type: content
+    message: 从报警到升级用了 33 分钟，报警被当成噪音
+    pattern: vertical-timeline
+    focus: {object: 9 月 12 日故障的经过, form: timeline, count: 1}
+    density: medium
+    container: none
+    columns: "3:2"
+    g: 16.72
+    source_chars: 280
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: left
+  - page: 22
+    type: content
+    message: 服务成本的增量几乎全部来自 AI 接口
+    pattern: doughnut-plus-table
+    focus: {object: 三季度单用户服务成本的构成, form: chart, count: 1}
+    density: medium
+    container: none
+    columns: "1:1"
+    g: 23.62
+    source_chars: 142
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: right
+    chart: {focus_series: 第三方 AI 接口}
+  - page: 23
+    type: section
+  - page: 24
+    type: statement
+    message: 让每个新团队在 7 天内来齐 3 个人
+    image:
+      role: full-bleed
+      layout: 1
+      side: full
+      source: pexels
+      id: "35104240"
+      photographer: Miguel Rivera
+      url: https://www.pexels.com/photo/boats-in-tranquil-waters-at-el-albir-spain-35104240/
+      query: three boats aerial view blue water
+      candidates_viewed: 10
+      reason: 恰好三条小船在同一片海面上，对应「来齐 3 个人」；第一次选的快艇图原图实为四艘，换掉
+  - page: 25
+    type: content
+    message: 模板引擎和 AI 助手下沉为平台能力
+    pattern: layered-architecture
+    focus: {object: 调整后的三层架构, form: headings, count: 3}
+    density: medium
+    container: fill
+    columns: "1"
+    g: 18.47
+    source_chars: 131
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: none
+  - page: 26
+    type: content
+    message: 邀请流程重构必须在 2027 年二季度内全量
+    pattern: horizontal-timeline
+    focus: {object: 五个季度的落地节奏, form: timeline, count: 1}
+    density: medium
+    container: none
+    columns: "1"
+    g: 21.8
+    source_chars: 159
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: none
+  - page: 27
+    type: content
+    message: 投放组减半，人转去激活留存和 Android
+    pattern: paired-bars
+    focus: {object: 三个小组调整前后的人数, form: chart, count: 1}
+    density: light
+    container: none
+    columns: "1:1"
+    g: 27.0
+    source_chars: 59
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: true
+    series: null
+    visual_side: left
+    chart: {focus_series: 调整后}
+  - page: 28
+    type: content
+    message: 总额不变，买量从 70% 降到 30%，钱转去产品内激活
+    pattern: stacked-bar
+    focus: {object: 两年的市场预算结构, form: chart, count: 1}
+    density: light
+    container: none
+    columns: "4:5"
+    g: 27.0
+    source_chars: 82
+    contrast: restrained
+    title_pos: base
+    subtitle: true
+    conclusion: false
+    series: null
+    visual_side: right
+    chart: {focus_series: 产品内激活与邀请激励}
+  - page: 29
+    type: content
+    message: 三个风险都有明确的触发条件与应对
+    pattern: risk-columns
+    focus: {object: 三个风险, form: headings, count: 3}
+    density: medium
+    container: none
+    columns: "1"
+    g: 16.89
+    source_chars: 270
+    contrast: restrained
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: full
+  - page: 30
+    type: section
+  - page: 31
+    type: content
+    message: 推荐方案 A 全面转向
+    pattern: options-cards
+    focus: {object: 三个方案, form: headings, count: 3}
+    density: medium
+    container: fill
+    columns: "1"
+    g: 24.0
+    source_chars: 209
+    contrast: strong
+    title_pos: base
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: none
+  - page: 32
+    type: content
+    message: 本次会议要决定预算、编制、AI 计费三件事
+    pattern: numbered-list
+    focus: {object: 三件待决策的事, form: headings, count: 3}
+    density: light
+    container: none
+    columns: "1:2"
+    g: 23.91
+    source_chars: 90
+    contrast: strong
+    title_pos: right-of-image
+    subtitle: false
+    conclusion: false
+    series: null
+    visual_side: left
+    image:
+      role: atmosphere
+      layout: 5
+      side: left
+      source: pexels
+      id: "10421637"
+      photographer: 준섭 윤
+      url: https://www.pexels.com/photo/low-angle-shot-of-skyscrapers-10421637/
+      query: office tower low angle clear sky
+      candidates_viewed: 18
+      reason: 灰蓝低饱和的塔楼仰拍，居中竖裁后是一座塔楼加大片干净天空；商务语境，不与目录页的正面单塔构图重复
+  - page: 33
+    type: closing
