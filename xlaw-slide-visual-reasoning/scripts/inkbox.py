@@ -3,6 +3,7 @@ inkbox.py — 文字墨迹框估算（14-validation-spec §3.3）
 
 validate_design.py 与生成端共用。字宽用经验系数，不依赖字体文件：
     CJK: size×1.0    拉丁字母 / 数字: size×0.55    空格: size×0.3    字间距（rPr spc / pptxgenjs charSpacing）：每字再加 spc pt
+    箭头（→ ← ↑ ↓ ↔ ⇒）: size×1.0（英文字体里没有这些字形，渲染时回退到中文字体，是全角宽）    %: size×0.9    ‰: size×1.25
 行高 = size × 行距倍数（段落 lnSpc，缺省 1.2）；行数 = ceil(行宽 / inner_w)，空段落算 1 行。
 
 校验端：
@@ -18,7 +19,8 @@ import re
 import sys
 
 EMU_PER_PT = 12700
-DEFAULT_TH = {'cjk': 1.0, 'latin': 0.55, 'space': 0.3, 'line_spacing': 1.2, 'inset': 7.2}
+DEFAULT_TH = {'cjk': 1.0, 'latin': 0.55, 'space': 0.3, 'line_spacing': 1.2, 'inset': 7.2, 'arrow': 1.0, 'percent': 0.9, 'permille': 1.25}
+_ARROWS = set('→←↑↓↔⇒⇐⟶⟵')
 DEFAULT_SIZE = 18.0   # run 无 sz 时的回退值（pptxgenjs 总是写 sz）
 
 _CJK_RE = re.compile(
@@ -37,6 +39,12 @@ def char_width(ch, size, ink):
         return size * ink['space']
     if is_cjk(ch):
         return size * ink['cjk']
+    if ch in _ARROWS:                       # 回退到中文字体的全角箭头；按拉丁 0.55 估会让「86 → 178」压到右边的释义
+        return size * ink.get('arrow', DEFAULT_TH['arrow'])
+    if ch == '%':
+        return size * ink.get('percent', DEFAULT_TH['percent'])
+    if ch == '‰':
+        return size * ink.get('permille', DEFAULT_TH['permille'])
     return size * ink['latin']
 
 

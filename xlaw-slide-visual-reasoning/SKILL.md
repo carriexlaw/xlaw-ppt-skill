@@ -84,6 +84,8 @@ python scripts/render_deck.py --check
    - **文本框按墨迹框贴文字**：先用 `python scripts/inkbox.py --size <pt> --width <pt> --text "..."` 算出需要的高度，文本框高度取该值，不留多余空高；留白与间距校验用的是墨迹框，空高会让间距失真。
    - **图片来源写进该页备注**：`slide.addNotes(...)` 内包含 source 与 photographer（`fetch_images.py select` 会打印应写的那一行）。Unsplash 必须按其规范署名。
    - **中文大标题加字间距**：内容页 `title` 带 `charSpacing: 0.075 × fontSize`，封面 / 章节 / 目录 `0.1 × fontSize`；算高度 / 判折行时 `inkbox.py --spacing` 带上同样的值。内容页 title 28–40、必须单行；过长（墨迹宽 > 84% 标题宽）就缩一档（layout.py 的 `title` 输出已处理）。
+   - **高亮色克制**（`01` Color）：accent 只给本页结论里最重要的数字 / 词；论据数字、释义、单位用深色；饱和高亮色不作背景、不铺大色块（章节页也不行，C-14 [M]）；暖色 accent 用得更少；accent 是暖色时区域背景取更灰、更冷的浅色。先分清本页哪块是结论、哪块是论据：结论放大占主区，论据缩小
+   - **数据带名称和单位**：每个数据配小标题级名称；单位紧跟数字（layout 的 text 节点 `unit`），不藏进小字；前后对比标出对比维度（时间）；「大数字 → 大数字」全 deck ≤ 3 页，其余用小表格 / 成对条形 / 堆叠条；构成用饼图 / 环形图，不用柱状图（`07`）
    - **高亮与粗体**：小标题、结论句用 Medium，不用大标题同款 Bold；一组并列小标题里只让一个成分用 accent；页面有重点组件时 accent 全部集中在它身上（其余小标题、圆点、数字降噪）；高亮已用在小标题上时 icon 用深色降噪。
    - **bullet**：段首 run 给 `bullet: {code: '25CF'}`（accent）或 `'25CB'`（降噪色），postfix.py 统一成固定字体的 ● 135%（缺省 System Font Regular，`deck.bullet` 可覆盖），缩进约 1.4 × 字号；要点文本给段距 `paraSpaceBefore ≈ 0.4 × 字号`（layout 的 text 节点加 `para_gap: true`，输出里带 `para_gap`）。
    - **不造元标签、不复述标题**：「结论先行」这类词不做 title / kicker；小标题级以上的文字不把 title 再说一遍（C-11）。只有一句话的页用 `statement` 页类型（`06`）。
@@ -92,7 +94,7 @@ python scripts/render_deck.py --check
    - **每个 `addImage` 必须带 `sizing: {type: 'cover', w, h}`，禁止靠 w / h 直接拉伸**（C-35 会查形状与像素的宽高比）。pptxgenjs 在 Node 里读不到像素尺寸，它把 `w / h` 当作图片自身尺寸来算裁剪，所以 `w / h` 必须按图片自身宽高比给，`sizing.w / h` 才是页面上的框（`layout.py` 的输出里已经给出 `img_w / img_h`）。
    - 遮罩是 `addShape(rect, { fill: { color, transparency } , objectName: 'mask' })`。
    - 单个段落 ≤ 100 汉字当量且 ≤ 4 行，单个文本框 ≤ 200 字（C-36）；超出拆成多个 body 或改结构，不是缩字号。
-   - 布局由 `scripts/layout.py` 的尺度循环计算（`14` §4c），build.js 不得手写内容元素坐标。元素树的节点：text / icon / tag / image / chart / table / pair（紧贴对：数字 + 释义、icon + 要点、色块 + 序列名、大括号 + items）/ row（并列格，`balance` 让容器宽度随内容、`stretch` 对齐高度）/ stack / card（可带压角的圆形或胶囊 tag）/ timeline（横向时间线，含说明容器）；列加 `region: true`、顶层节点加 `region: "bottom"` 输出贴边区域背景；列加 `edge` 输出满页高边图（配图方式 5 / 6）：字号档由密度档定（S-01），间距 g 由剩余空间算出（S-02），内容块横向填满、竖向填满或居中（S-03），容器贴内容（S-04），无洞（S-05），对齐线 ≤ 3（S-06）。
+   - 布局由 `scripts/layout.py` 的尺度循环计算（`14` §4c），build.js 不得手写内容元素坐标。元素树的节点：text（可带 `unit`）/ icon / tag / image / chart / table / box / vtimeline / pair（紧贴对：数字 + 释义、icon + 要点、色块 + 序列名、大括号 + items）/ row（并列格，`balance` 让容器宽度随内容、`stretch` 对齐高度）/ stack / card（可带压角的圆形或胶囊 tag）/ timeline（横向时间线，含说明容器）；列加 `region: true`、顶层节点加 `region: "bottom"` 输出贴边区域背景；列加 `edge` 输出满页高边图（配图方式 5 / 6）：字号档由密度档定（S-01），间距 g 由剩余空间算出（S-02），内容块横向填满、竖向填满或居中（S-03），容器贴内容（S-04），无洞（S-05），对齐线 ≤ 3（S-06）。
      ```bash
      python scripts/layout.py page05.json --deck deck.manifest.yaml --write-g > _qa/layout/05.json     # 输入：页级 manifest（page、density、columns）+ 元素清单；输出：g、p、每个元素的框与字号；--write-g 把 g 写回该页 manifest
      ```
@@ -154,4 +156,5 @@ python scripts/validate_design.py deck.pptx deck.manifest.yaml  # 3 机器校验
 - 不为了塞内容缩字号、缩间距；超 480 字拆页。也不为了填页面放大间距：g 超上限时放大元素，不放大空隙。
 - 不改 `thresholds.yaml` 来让校验通过。
 - 不为了凑「主元素」放大一个数字、造一个标题：第一层级是论述对象，内容里没有就不造。
+- 商务 deck 的封面 / 目录不用海岛、沙滩风景，不从品牌名字面联想配图：先找行业 / 产品的使用场景图，找不到用高楼 / 城市天际线（`09`、`11`）。
 - 不自创配图方式：图片只按 `11` 的 1–7 摆，方式 5 / 6 必须满页高贴边。

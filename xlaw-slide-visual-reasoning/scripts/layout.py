@@ -22,7 +22,9 @@ layout.py — 尺度循环（14 §4c）：由页级 manifest（density、columns
             para_gap：bullet 段距 = hierarchy.para_gap_mult × 字号（段前）；w_frac：框宽收窄到列宽的比例并居中（窄长区域里的文字），chart 同样支持
             indent：bullet 缩进（× 字号），折行宽度相应变窄
             tier 缺省：hero:big-number → number；heading / conclusion → heading；label → label；body → body；其它 → fixed（用 size）
-  icon      {"id", "kind": "icon", "em"?: 2.2}                         # 方形，边长 = em × 正文字号
+            unit：数字的单位（「万」「亿元」「个月」），与数字写在同一个文本框里、紧跟数字、字号 = 数字释义档或 "unit_size"（输出 unit_size）：单位不藏进小字释义
+  icon      {"id", "kind": "icon", "em"?: 2.2, "align"?: "center"}     # 方形，边长 = em × 正文字号；align=center：在所在格 / 列内居中（与居中的文字同一条中轴线）
+  box       {"id", "kind": "box", "role", "h": pt, "w"?: pt, "w_frac"?: 0.6, "align"?: "center"}     # 固定高的占位框（自绘的小表格 / 对比条），宽缺省 = 列宽
   tag       {"id", "kind": "tag", "shape": "circle"|"pill", "text", "size"}     # 小容器：宽高由文字定
   brace     {"id", "kind": "brace"}                                    # 只作 pair.left：大括号，高 = pair 高（包含 / 组成关系）
   image     {"id", "kind": "image", "role", "path", "h"?}              # 无 h：伸缩（只在列的顶层）；输出 img_w / img_h
@@ -35,6 +37,8 @@ layout.py — 尺度循环（14 §4c）：由页级 manifest（density、columns
   card      {"id", "kind": "card", "items": [node...], "tag"?: {"id", "shape": "circle"|"pill", "text", "size"}}
             # tag 压在卡片左上角：circle 的圆心落在卡片上沿；pill 的垂直中心落在卡片上沿
   timeline  {"id", "kind": "timeline", "nodes": [{"id", "time": "2026\\nQ4", "text"?, "icon"?: true, "empty"?: true}], "callout"?: {"text", "at": 3, "size"?}}
+  vtimeline {"id", "kind": "vtimeline", "nodes": [{"id", "time", "text"}], "time_em"?: 5, "time_size"?: 18}
+            # 竖向时间线（05）：线左是时间（右对齐到线）、线右是内容；节点多、每条内容长（横向放不下）时用。输出 <id>.axis、<nid>.time / .dot / .text
   band      顶层 stack 里的节点加 "region": "bottom" → 从该节点上方 1.5g 铺到页面底边、左右满宽；输出 boxes["region"]
   相邻节点间距 = gap × g；gap 缺省：同 group → 1，不同 group → 2
 输出：{"ok", "g", "p", "e", "sizes": {body, heading, label, number, title}, "B", "boxes": {id: {x,y,w,h,size?,...}}, "notes"}
@@ -182,7 +186,18 @@ class Layout:
             out[i] = xw
         return out, gap
 
+    def unit_w(self, it):
+        """数字后的单位：释义档字号，前面留 0.15 × 数字字号"""
+        if not it.get('unit'):
+            return 0.0
+        us = float(it.get('unit_size') or self._label)
+        return 0.15 * self.size_of(it) + estimate_lines(it['unit'], us, 10 ** 6, self.ink)[1]
+
     def ink_of(self, it, w=None):
+        if it.get('unit'):
+            n, mw, h = self.ink_of(dict(it, unit=None), None)
+            mw += self.unit_w(it)
+            return (1 if not w or mw <= w else 2), (min(w, mw) if w else mw), h
         if w and it.get('indent'):
             w = max(w - float(it['indent']) * self.size_of(it), 1.0)
         """(行数, 墨迹宽, 高)。数字 / 拉丁字符按安全系数估宽（渲染字体比估算宽）"""
@@ -243,6 +258,10 @@ class Layout:
             return 0.0
         if k == 'image':
             return float(it.get('h', 0.0))
+        if k == 'box':
+            return float(it['h'])
+        if k == 'vtimeline':
+            return self.vtimeline_parts(it, w)['h']
         if k == 'chart':
             return w * float(it['aspect']) if 'aspect' in it else 0.0
         if k == 'table':
@@ -311,6 +330,29 @@ class Layout:
         if t['co_h']:
             h += t['co_h'] + TIGHT * self.body + t['arrow'] + self.g
         return h
+
+    # ---- 竖向时间线
+    def vtimeline_parts(self, it, w):
+        ts = float(it.get('time_size', self.heading))
+        tw = float(it.get('time_em', 5)) * ts
+        xw = max(w - tw - 2 * self.g, 1.0)
+        rows = []
+        for nd in it['nodes']:
+            th_ = self.ink_of({'kind': 'text', 'text': nd['time'], 'tier': 'fixed', 'size': ts}, tw)[2]
+            xh = self.ink_of({'kind': 'text', 'text': nd['text'], 'tier': 'body'}, xw)[2]
+            rows.append((th_, xh, max(th_, xh)))
+        return dict(ts=ts, tw=tw, xw=xw, rows=rows, dot=0.7 * self.body, h=sum(r[2] for r in rows) + (len(rows) - 1) * self.g)
+
+    def place_vtimeline(self, it, x, y, w, out):
+        t = self.vtimeline_parts(it, w)
+        tid, ax = it['id'], x + t['tw'] + self.g
+        out[f'{tid}.axis'] = {'id': f'{tid}.axis', 'kind': 'arrow', 'x': ax, 'y': y, 'w': 0.0, 'h': t['h']}
+        for nd, (th_, xh, rh) in zip(it['nodes'], t['rows']):
+            nid = nd['id']
+            out[f'{nid}.time'] = {'id': f'{nid}.time', 'kind': 'text', 'x': x, 'y': y + (rh - th_) / 2, 'w': t['tw'], 'h': th_, 'size': t['ts'], 'align': 'right'}
+            out[f'{nid}.dot'] = {'id': f'{nid}.dot', 'kind': 'tag', 'x': ax - t['dot'] / 2, 'y': y + rh / 2 - t['dot'] / 2, 'w': t['dot'], 'h': t['dot'], 'shape': 'circle'}
+            out[f'{nid}.text'] = {'id': f'{nid}.text', 'kind': 'text', 'x': ax + self.g, 'y': y + (rh - xh) / 2, 'w': t['xw'], 'h': xh, 'size': self.body, 'align': 'left'}
+            y += rh + self.g
 
     # ---- g：二分求最大的可行 g
     def col_h(self, col, w):
@@ -468,7 +510,7 @@ class Layout:
         self.set_title()
         self.refresh_label()
         has = {t: any(self.tier(x) == t for x in self.text_nodes()) for t in ('body', 'heading', 'number')}
-        has['body'] = has['body'] or any(it['kind'] == 'timeline' for c in self.spec['columns'] for it in c['items'])
+        has['body'] = has['body'] or any(it['kind'] in ('timeline', 'vtimeline') for c in self.spec['columns'] for it in c['items'])
         # 大数字起始就折行 → 缩（不低于 2.5 b 的起始值就是下限：此时只能加宽列）
         g, capped = self.solve_g()
         self.feasible(g)
@@ -518,12 +560,21 @@ class Layout:
             al = it.get('align', 'left')
             if it.get('para_gap'):
                 b['para_gap'] = round(self.hi.get('para_gap_mult', 0.4) * self.size_of(it), 1)
+            if it.get('unit'):
+                b['unit_size'] = float(it.get('unit_size') or self._label)
             b.update(size=self.size_of(it), lines=n, ink_w=iw, align=al, role=it.get('role'),
                      ink_x=x + ((w - iw) / 2 if al == 'center' else (w - iw) if al == 'right' else 0.0))
             if it.get('spc'):
                 b['spc'] = round(float(it['spc']) * b['size'], 2)
         elif k == 'icon':
             b['w'] = h
+            if it.get('align') == 'center':
+                b['x'] = x + (w - h) / 2
+        elif k == 'box':
+            bw = float(it['w']) if it.get('w') else w * float(it.get('w_frac', 1.0))
+            b['x'], b['w'] = (x + (w - bw) / 2 if it.get('align') == 'center' else x), bw
+        elif k == 'vtimeline':
+            self.place_vtimeline(it, x, y, w, out)
         elif k == 'tag':
             b['w'], b['shape'], b['size'] = self.tag_dim(it)[0], it.get('shape', 'circle'), float(it['size'])
         elif k == 'image':
@@ -622,6 +673,63 @@ class Layout:
                 hh = self.ink_of({'kind': 'text', 'text': nd['text'], 'tier': 'body'}, t['iw'])[2]
                 out[f'{nid}.text'] = {'id': f'{nid}.text', 'kind': 'text', 'x': cx - t['iw'] / 2, 'y': y_text, 'w': t['iw'], 'h': hh, 'size': self.body, 'align': 'center'}
 
+    def ink_span(self, it, x, w):
+        """节点的墨迹左右沿（S-03 预检）。容器 / 图 / 表 / 时间线占满所在宽度"""
+        k = it['kind']
+        if it.get('w_frac') and k in ('text', 'chart'):
+            nw = w * float(it['w_frac']); x, w = x + (w - nw) / 2, nw
+        if k == 'text':
+            n, iw = self.ink_of(it, w)[:2]
+            if n > it['text'].count('\n') + 1:                                # 折行的段落：墨迹撑满文本框
+                return x, x + w
+            iw += float(it.get('indent', 0.0)) * self.size_of(it)
+            if self.tier(it) in ('number', 'label') or it.get('fit'):
+                iw = min(w, iw / self.sc.get('nowrap_safety', 1.0))          # 校验器不带安全系数
+            al = it.get('align', 'left')
+            x0 = x + ((w - iw) / 2 if al == 'center' else (w - iw) if al == 'right' else 0.0)
+            return x0, x0 + iw
+        if k in ('icon', 'tag', 'brace'):
+            fw = self.fit_w(it)
+            x0 = x + (w - fw) / 2 if it.get('align') == 'center' else x
+            return x0, x0 + fw
+        if k == 'pair':
+            wl = self.fit_w(it['left'])
+            return x, self.ink_span(it['right'], x + wl + TIGHT * self.body, max(w - wl - TIGHT * self.body, 1.0))[1]
+        if k == 'stack':
+            sp = [self.ink_span(c, x, w) for c in it['items']]
+            return min(a for a, _ in sp), max(b for _, b in sp)
+        if k == 'row':
+            ws, gap = self.row_widths(it, w)
+            sp, cx = [], x
+            for cell, cw in zip(self.cells_of(it), ws):
+                sp += [self.ink_span(c, cx, cw) for c in cell]
+                cx += cw + gap
+            return (min(a for a, _ in sp), max(b for _, b in sp)) if sp else (x, x + w)
+        if k == 'box':
+            bw = float(it['w']) if it.get('w') else w * float(it.get('w_frac', 1.0))
+            x0 = x + (w - bw) / 2 if it.get('align') == 'center' else x
+            return x0, x0 + bw
+        return x, x + w
+
+    def precheck_edges(self, xws, e):
+        """S-03 横向：内容块左右沿必须落在版心边 ± e。左对齐的窄内容放在最右列、居中的窄内容放在最左列都会挂"""
+        cols = self.spec['columns']
+        spans = [(ci, self.ink_span({'kind': 'stack', 'items': c['items']}, x, w)) for ci, (c, (x, w)) in enumerate(zip(cols, xws)) if not c.get('edge') and c['items']]
+        if not spans:
+            return True
+        ok = True
+        left, right = self.margin[0], self.margin[0] + self.margin[2]
+        side_l = any(c.get('edge') == 'left' or (c.get('region') and i == 0 and len(cols) > 1) for i, c in enumerate(cols))
+        side_r = any(c.get('edge') == 'right' or (c.get('region') and i == len(cols) - 1 and len(cols) > 1) for i, c in enumerate(cols))
+        d_l, d_r = min(a for _, (a, _) in spans) - left, right - max(b for _, (_, b) in spans)
+        if not side_l and d_l > e:
+            ok = False
+            self.notes.append(f'内容块左沿离版心 {d_l:.1f} > e={e:.1f}（S-03 会挂）：最左列是居中 / 收窄的内容，改左对齐，或把它放进区域背景')
+        if not side_r and d_r > e:
+            ok = False
+            self.notes.append(f'内容块右沿离版心 {d_r:.1f} > e={e:.1f}（S-03 会挂）：最右列是左对齐的窄内容。把图表 / 表格 / 区域背景放右、文字放左，或用 row.ratios 收窄末格，不加字')
+        return ok
+
     def finalize(self):
         xws, gap = self.col_widths()
         B = self.B
@@ -661,6 +769,16 @@ class Layout:
                     ry = y - 1.5 * self.g
                     out['region'] = {'id': 'region', 'kind': 'region', 'x': 0.0, 'y': ry, 'w': self.page_w, 'h': self.page_h - ry}
                 y += self.h_of(it, w) if not self.is_flex(it) else 0.0
+        if not self.precheck_edges(xws, e):
+            ok = False
+        reg = out.get('region')
+        if reg and self.title_box and reg['h'] >= self.page_h - 1:          # 侧边区域背景：标题墨迹不得压到区域上
+            t = self.spec['title']
+            spc_k = float(self.th['title'].get('content_spacing', 0.075))
+            ink_r = self.title_box['x'] + estimate_lines(t['text'], self.title_box['size'], 10 ** 6, self.ink, spc_k * self.title_box['size'])[1]
+            if reg['x'] > self.title_box['x'] and ink_r > reg['x'] - self.g:
+                ok = False
+                self.notes.append(f'标题墨迹右沿 {ink_r:.0f} 压到右侧区域背景（x={reg["x"]:.0f}）：改用贴底区域（节点加 region: "bottom"），或给 title.w 让标题缩一档')
         if max_res > self.sc['hole_mult'] * self.g + 0.5:
             ok = False
             self.notes.append(f'列内居中留下的空当 {max_res:.1f} > 3g={3 * self.g:.1f}（S-05 会判洞）：调列比或改结构，不加字')

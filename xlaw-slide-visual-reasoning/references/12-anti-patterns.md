@@ -25,6 +25,10 @@
   - Floating Image：图片不在 7 种配图方式之内，悬在页面中间。
   - Paragraphed Parallel：并列 / 分类内容写成段落或同号小字，没有视觉并列。
   - Timeline as List：时间节点写成列表。
+  - Accent Flood：饱和高亮色铺满全屏或大色块（章节页整页橙色）；页面中段一整片都是高亮色的数字和释义。暖色尤其燥。
+  - Evidence over Conclusion：现象 / 论据（翻倍的数据）占了主区并放大，真正的重点（原因、结论）被挤进小容器。
+  - Naked Number：数字放大了，但名称在小字里、单位藏在释义里，数字本身没有意义。
+  - Resort Cover：商务 deck 用海岛 / 沙滩风景做封面或目录图；从品牌名字面联想配图。
   - Accent Everywhere：一组并列小标题全部加粗 + 高亮，icon、分支数字也用高亮色，重点反而不突出。
   - Uneven Bullets：同页 bullet 圆点大小不一（圆点跟随了段首文字的字体）。
   - Loose Component：互相解释的一组元素（数字 + 图）被拉开摆放。
