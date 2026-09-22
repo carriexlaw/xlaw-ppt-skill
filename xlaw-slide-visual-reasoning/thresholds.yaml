@@ -3,8 +3,8 @@ raster_cell: 4
 ink: {cjk: 1.0, latin: 0.55, space: 0.3, line_spacing: 1.2, inset: 7.2, arrow: 1.0, percent: 0.9, permille: 1.25}   # run 有字间距（spc）时每字再加 spc/100 pt
 density: {light_chars: 120, medium_chars: 300, max_chars: 480,
           light_elems: 8, medium_elems: 20, void_hero_chars: 80}
-hero: {area_frac: 0.30}                          # 只对 hero:table / hero:image 生效（font_mult 3.0 已删，第五轮）
-# ---- 层级（01 Visual Hierarchy / 14 C-01、C-03；第五轮，数值类先记 W）
+hero: {area_frac: 0.30}                          # 只对 hero:table / hero:image 生效
+# ---- 层级（01 Visual Hierarchy / 14 C-01、C-03；数值类先记 W）
 hierarchy:
   max_heroes: 4                                   # 每页 hero:* 0–4 个
   max_ratio: 3.5                                  # 最大字号（title 除外）/ 正文 ≤ 3.5
@@ -34,7 +34,7 @@ anchor: {title_tol: 2, mask_edge_frac: 0.05, mask_edge_vtol: 4, image_center_fra
 type_scale_tol: 0.5
 max_sizes_per_page: 5                             # 不计 title / source / pagenum
 accent_max_chars: 20
-accent: {fill_max_frac: 0.08, text_max_frac_warm: 0.25, mask_hue_tol: 45}   # C-14（第六轮）：accent 填充的单个形状 ≤ 8% 页面面积 [M]；暖色 accent 的文字占本页文字（不计表格）≤ 25% [W]，冷色 accent 不查；遮罩色相与图片主色相差 ≤ 45° [W]
+accent: {fill_max_frac: 0.08, text_max_frac_warm: 0.25, mask_hue_tol: 45}   # C-14：accent 填充的单个形状 ≤ 8% 页面面积 [M]；暖色 accent 的文字占本页文字（不计表格）≤ 25% [W]，冷色 accent 不查；遮罩色相与图片主色相差 ≤ 45° [W]
 contrast: {body: 4.5, large: 3.0, large_pt: 18, large_bold_pt: 14, percentile: 80}
 deck: {series_max: 0.40, heavy_max: 0.40, subtitle_max: 0.60, subtitle_run: 4,
        conclusion_run: 2, conclusion_max: 0.50, noframe_min: 0.333}
@@ -45,10 +45,10 @@ images: {viewed_min: 8, reason_min: 8, thumb_max_px: 640, phash_min: 12,
 cards: {min: 2, max: 6}                           # C-10
 image_aspect_tol: 0.02
 text: {para_max_chars: 100, para_max_lines: 4, box_max_chars: 200, source_mult: 1.1}   # source_mult：C-37 正文字数 ≤ 1.1 × source_chars
-# ---- 尺度优先（14 §4 S-01–S-06；2026-09-17 第三轮；bands 2026-09-20 第五轮改）
+# ---- 尺度优先（14 §4 S-01–S-06）
 scale:
   bands:                                          # S-01：按密度档定字号档（只取 type_scale 里的值）
-    light:  {body_min: 18, body_cap: 20}          # 第五轮：密度档只定正文起始值；body_cap 是生成端放大上限，不是校验上限
+    light:  {body_min: 18, body_cap: 20}          # 密度档只定正文起始值；body_cap 是生成端放大上限，不是校验上限
     medium: {body_min: 16, body_cap: 16}
     heavy:  {body_min: 14, body_cap: 14}
   hero_block_h: 0.80                              # S-01：hero:table / hero:image 高度 ≥ 0.8 × body 高（图表不查）

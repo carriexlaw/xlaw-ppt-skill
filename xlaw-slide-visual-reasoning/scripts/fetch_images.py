@@ -5,12 +5,13 @@ fetch_images.py — 三家图库官方 API → 候选缩略图 + _qa/candidates/
         Step 0：检查 PEXELS_API_KEY / UNSPLASH_ACCESS_KEY / PIXABAY_API_KEY，逐家发一次测试请求。
         无一可用 → exit 1，打印授权说明（key 免费、怎么拿）。key 本身绝不打印。
 
-    python fetch_images.py search --page 5 --query "aerial coastal port cool tones" [--query "..."] [--source pexels] [--per 10] [--qa _qa]
-        每组检索词取前 --per 张（默认 10），只下载缩略图到 _qa/candidates/05/，合并写入 _qa/candidates/05.json（viewed=false）。
-        之后用 Read 逐张看缩略图，再用 mark 记录打分。
+    python fetch_images.py search --page 5 --query "aerial coastal port cool tones" [--query "..."] [--source pexels] [--per 8] [--qa _qa]
+        每组检索词取前 --per 张（默认 8），只下载缩略图到 _qa/candidates/05/，合并写入 _qa/candidates/05.json（viewed=false），
+        并自动生成候选拼图 _qa/candidates/05-sheet.png（每格带序号与 id，长边 1568）。看图的一方先看拼图，只对前几名单独放大看。
 
-    python fetch_images.py mark --page 5 --id 1234567 --score 4 --note "负空间右侧，冷色" [--qa _qa]
-        置 viewed=true 并记录 score / note。看过但不选的也要 mark（candidates_viewed 只数 viewed=true）。
+    python fetch_images.py mark --page 5 --scores "1234567:4:负空间右侧,2345678:2:人物正面" [--qa _qa]
+        批量打分：id:score:note 以逗号分隔（note 里不要含逗号）。置 viewed=true 并记录 score / note。
+        看过但不选的也要 mark（candidates_viewed 只数 viewed=true）。单张写法仍可用：mark --page 5 --id 1234567 --score 4 --note "..."
 
     python fetch_images.py select --page 5 --id 1234567 [--index 1] [--qa _qa]
         下载原图到 _qa/selected/05.jpg（多图页 --index k → 05-k.jpg），打印 manifest.image 与页备注要写的字段。
@@ -28,6 +29,8 @@ warnings.filterwarnings('ignore', message='urllib3 v2 only supports OpenSSL')
 QA_DEFAULT = '_qa'
 TIMEOUT = 20
 THUMB_MAX = 640      # 缩略图长边上限（14 C-30 images.thumb_max_px）
+SHEET_LONG = 1568    # 候选拼图长边
+SHEET_COLS = 4
 
 
 def _shrink(path, max_px):
@@ -194,11 +197,73 @@ def search(page, queries, source, per, qa, image_type='photo'):
                 added += 1
     _save_rec(qa, page, rec)
     print(f'page {page:02d}: 新增 {added} 张候选，共 {len(rec["candidates"])} 张 → {_rec_path(qa, page)}')
-    for c in rec['candidates']:
+    for i, c in enumerate(rec['candidates'], 1):
         flag = '✓' if c.get('viewed') else ' '
-        print(f'  [{flag}] {c["source"]:8s} {c["id"]:14s} {c.get("width")}x{c.get("height")}  {c["thumb"]}  q="{c.get("query", "")}"')
-    print('下一步：用 Read 逐张查看缩略图，每看一张就 mark 一张。')
+        print(f'  [{flag}] #{i:<2d} {c["source"]:8s} {c["id"]:14s} {c.get("width")}x{c.get("height")}  q="{c.get("query", "")}"')
+    sheets = sheet(page, qa)
+    if sheets:
+        print('候选拼图：' + ', '.join(sheets))
+    print('下一步：由看图的子代理看拼图并批量 mark（--scores），只对前 2–3 名放大看单张缩略图；主会话不看图。')
     return 0
+
+
+def mark_many(page, scores, qa):
+    """--scores "id:score:note,id:score:note,..." """
+    rec = _load_rec(qa, page)
+    by_id = {c['id']: c for c in rec['candidates']}
+    bad = []
+    for item in scores.split(','):
+        item = item.strip()
+        if not item:
+            continue
+        parts = item.split(':', 2)
+        cid = parts[0].strip()
+        c = by_id.get(cid)
+        if c is None:
+            bad.append(cid)
+            continue
+        c['viewed'] = True
+        if len(parts) > 1 and parts[1].strip():
+            c['score'] = int(parts[1])
+        if len(parts) > 2:
+            c['note'] = parts[2].strip()
+    _save_rec(qa, page, rec)
+    n = sum(1 for x in rec['candidates'] if x.get('viewed'))
+    print(f'page {page:02d}: 已看 {n} 张' + (f'；候选里没有 {bad}' if bad else ''))
+    return 1 if bad else 0
+
+
+def sheet(page, qa):
+    """候选拼图：4 列 × 2–3 行为一张，每格带序号与 id；候选 > 12 张时分多张（05-sheet.png、05-sheet-2.png …）"""
+    from PIL import Image, ImageDraw
+    rec = _load_rec(qa, page)
+    cands = [c for c in rec['candidates'] if c.get('thumb')]
+    if not cands:
+        return []
+    base = os.path.dirname(qa.rstrip('/')) or '.'
+    cell_w = SHEET_LONG // SHEET_COLS
+    cell_h = int(cell_w * 0.75) + 22
+    per_sheet = SHEET_COLS * 3
+    outs = []
+    for si in range(0, len(cands), per_sheet):
+        chunk = cands[si:si + per_sheet]
+        rows = (len(chunk) + SHEET_COLS - 1) // SHEET_COLS
+        im_sheet = Image.new('RGB', (SHEET_COLS * cell_w, rows * cell_h), 'white')
+        draw = ImageDraw.Draw(im_sheet)
+        for i, c in enumerate(chunk):
+            x0, y0 = (i % SHEET_COLS) * cell_w, (i // SHEET_COLS) * cell_h
+            try:
+                im = Image.open(os.path.join(base, c['thumb'])).convert('RGB')
+                im.thumbnail((cell_w - 6, cell_h - 28))
+                im_sheet.paste(im, (x0 + (cell_w - im.width) // 2, y0 + 2 + (cell_h - 28 - im.height) // 2))
+            except Exception:
+                draw.rectangle([x0 + 3, y0 + 3, x0 + cell_w - 3, y0 + cell_h - 26], outline='red', width=2)
+            draw.text((x0 + 6, y0 + cell_h - 20), f'#{si + i + 1}  {c["source"]} {c["id"]}  {c.get("width")}x{c.get("height")}', fill='black')
+        name = f'{page:02d}-sheet.png' if si == 0 else f'{page:02d}-sheet-{si // per_sheet + 1}.png'
+        out = os.path.join(qa, 'candidates', name)
+        im_sheet.save(out)
+        outs.append(out)
+    return outs
 
 
 def mark(page, cid, score, note, qa):
@@ -259,10 +324,12 @@ def main():
     ap.add_argument('--check', action='store_true')
     sub = ap.add_subparsers(dest='cmd')
     s = sub.add_parser('search'); s.add_argument('--page', type=int, required=True); s.add_argument('--query', action='append', required=True)
-    s.add_argument('--source', choices=['pexels', 'unsplash', 'pixabay']); s.add_argument('--per', type=int, default=10); s.add_argument('--qa', default=QA_DEFAULT)
+    s.add_argument('--source', choices=['pexels', 'unsplash', 'pixabay']); s.add_argument('--per', type=int, default=8); s.add_argument('--qa', default=QA_DEFAULT)
     s.add_argument('--type', dest='image_type', choices=['photo', 'vector', 'illustration'], default='photo', help='vector：Pixabay 的矢量 / 扁平 icon 检索，同样走 mark / select 筛选')
-    m = sub.add_parser('mark'); m.add_argument('--page', type=int, required=True); m.add_argument('--id', required=True)
+    m = sub.add_parser('mark'); m.add_argument('--page', type=int, required=True); m.add_argument('--id')
     m.add_argument('--score', type=int); m.add_argument('--note', default=''); m.add_argument('--qa', default=QA_DEFAULT)
+    m.add_argument('--scores', help='批量：id:score:note,id:score:note,...')
+    sh = sub.add_parser('sheet', help='重新生成候选拼图'); sh.add_argument('--page', type=int, required=True); sh.add_argument('--qa', default=QA_DEFAULT)
     e = sub.add_parser('select'); e.add_argument('--page', type=int, required=True); e.add_argument('--id', required=True)
     e.add_argument('--index', type=int, default=0); e.add_argument('--qa', default=QA_DEFAULT)
     a = ap.parse_args()
@@ -271,7 +338,14 @@ def main():
     if a.cmd == 'search':
         return search(a.page, a.query, a.source, a.per, a.qa, a.image_type)
     if a.cmd == 'mark':
+        if a.scores:
+            return mark_many(a.page, a.scores, a.qa)
+        if not a.id:
+            print('mark 需要 --scores 或 --id'); return 2
         return mark(a.page, a.id, a.score, a.note, a.qa)
+    if a.cmd == 'sheet':
+        outs = sheet(a.page, a.qa)
+        print('\n'.join(outs) if outs else '该页没有候选'); return 0 if outs else 1
     if a.cmd == 'select':
         return select(a.page, a.id, a.index, a.qa)
     ap.print_help()

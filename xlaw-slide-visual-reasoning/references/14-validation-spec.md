@@ -2,9 +2,9 @@
 
 validate_design.py 的实现规格。13 的机器清单是索引，这里是每一项的输入、算法、阈值。所有数值阈值集中在 `thresholds.yaml`，代码不写死。
 
-层级模型（2026-09-20 第五轮）：不再有「每页恰一个主元素、≥ 3 × 正文」。第一层级 = 本页论述对象，可以是一组（0–4 个 `hero:*`，或一组 `heading`、一张图表 / 表格、一条时间线）；manifest 用 `focus` 声明。校验的是层级完整性（C-03，[W]）与同组一致（C-01，[M]），不是「最大的那个够不够大」。
+层级模型：没有「每页恰一个主元素、≥ 3 × 正文」这条。第一层级 = 本页论述对象，可以是一组（0–4 个 `hero:*`，或一组 `heading`、一张图表 / 表格、一条时间线）；manifest 用 `focus` 声明。校验的是层级完整性（C-03，[W]）与同组一致（C-01，[M]），不是「最大的那个够不够大」。
 
-留白模型（2026-09-17 第三轮，尺度优先）：留白不是输入，是内容按密度档放大到位之后的剩余。页面不再声明留白位置与比例；校验的是尺度（S-01）、间距（S-02）、内容块位置（S-03）、容器贴内容（S-04）、无洞（S-05）、对齐线（S-06）。生成端由 `scripts/layout.py` 的尺度循环算出全部坐标（§4c）。
+留白模型（尺度优先）：留白不是输入，是内容按密度档放大到位之后的剩余。页面不声明留白位置与比例；校验的是尺度（S-01）、间距（S-02）、内容块位置（S-03）、容器贴内容（S-04）、无洞（S-05）、对齐线（S-06）。生成端由 `scripts/layout.py` 的尺度循环算出全部坐标（§4c）。
 
 ## 0. 文件约定
 
@@ -15,8 +15,14 @@ deck.pptx
 deck.manifest.yaml        # deck 级 + 逐页 manifest（§1）
 _qa/candidates/NN.json    # 第 NN 页的图片候选记录（§6）
 _qa/candidates/NN/*.jpg   # 该页下载过的缩略图
+_qa/candidates/NN-sheet.png   # 该页候选拼图（fetch_images.py search 自动生成；校验器不读）
+_qa/selected/NN.jpg       # 选定原图（多图页 NN-1.jpg、NN-2.jpg …）
 _qa/contact_sheet.png     # 全部选中图拼图
-_qa/layout/NN.json        # layout.py 的输出（生成端产物，校验器不读）
+_qa/layout/NN.in.json / NN.json   # layout.py 的输入 / 输出（生成端产物，校验器不读）
+_qa/render/NN.png、grid-NN.png    # 渲染图与整套拼图（校验器不读）
+_qa/build-notes.md        # 生成阶段的决定与未解决的 W（校验器不读）
+_qa/review.md             # 渲染自查结论，每页一行（校验器不读）
+_qa/validate.json         # 校验器输出
 thresholds.yaml           # 阈值，缺省用本文件 §8 的默认值
 ```
 
@@ -49,7 +55,7 @@ deck:
   tone: argument            # argument / statement / vision
 ```
 
-不再有 `grid`（12 列栅格已删，列宽自由，见 S-06）与 `spacing_floor`（区级间距 = 3g，见 S-02）。
+没有 `grid`（列宽自由，见 S-06）与 `spacing_floor`（区级间距 = 3g，见 S-02）这两个字段。
 
 ### 1.2 页级
 
@@ -171,7 +177,7 @@ title / kicker 到 body 元素的间距不参与 S-02 的 {g, 2g, 3g} 判定：�
 - **并列组**：同层、成员角色相同、顶沿或垂直中心对齐（±2pt）的横排元素，n ≥ 3 且等距（相邻左沿差是最小差的整数倍 ±4pt，允许空位）或 n = 2 且等宽 → 整组在 S-06 里只按首项左沿、末项右沿各计一条对齐线
 - `panel:region` 内的元素在 S-06 里以该区域为一个独立范围另算 ≤ 3
 
-### 3.4c 连接箭头与流程页（第七轮）
+### 3.4c 连接箭头与流程页
 
 - 只含 `arrow` 的元素（流程箭头、连接线、序号后的细竖线）是连接件，不是内容：不参与 §3.4 的相邻间距，也不挡住两侧元素的相邻关系
 - 流程页（`focus.form: flow`）：各格由箭头连接，下排具体流程按行垂直居中、格宽随内容不等。S-02 只查 g 的上下限，不查 {g, 2g, 3g}；S-05 不查；S-06 页面范围只计整条流程的最左沿 / 最右沿（title 左沿仍须在其中）。其余检查不变
@@ -272,7 +278,7 @@ kicker、conclusion 的存在与 manifest.subtitle / conclusion 一致。不重�
 ### C-14 颜色 [M]
 所有文字色、fill、line 的 hex ∈ palette 全集。mask 例外：遮罩颜色取自图片自身主色（`scripts/mask_color.py`），不进 palette，透明度不限。accent 色的连续 run 汉字当量 > accent_max_chars → 失败。
 
-高亮色克制（第六轮，所有页类型）：
+高亮色克制（所有页类型）：
 - 单个非图片形状的 fill ∈ accent 且形状框面积 > `accent.fill_max_frac`（8%）× 页面面积 → 失败 [M]（全屏橙色章节页、大色块）
 - accent 为暖色（色相 < 70° 或 > 300°）时：内容页 accent 色文字字符数 / 本页文字字符数（不计 title / pagenum / source / 表格，总数 ≥ 20 才查）> `accent.text_max_frac_warm`（25%）→ 警告 [W]。冷色 accent 不查，沿用原规则（表格数据区按 07 用色）
 - 遮罩色相：mask 与其下图片的平均色色相差 > `accent.mask_hue_tol`（45°，两者饱和度都 > 0.12 才查）→ 警告 [W]
@@ -467,8 +473,8 @@ ink: {cjk: 1.0, latin: 0.55, space: 0.3, line_spacing: 1.2, inset: 7.2, arrow: 1
 accent: {fill_max_frac: 0.08, text_max_frac_warm: 0.25, mask_hue_tol: 45}   # C-14 高亮色克制 / 遮罩色相
 density: {light_chars: 120, medium_chars: 300, max_chars: 480,
           light_elems: 8, medium_elems: 20, void_hero_chars: 80}
-hero: {area_frac: 0.30}                          # 只对 hero:table / hero:image 生效（font_mult 3.0 已删，第五轮）
-# ---- 层级（01 Visual Hierarchy / 14 C-01、C-03；第五轮，数值类先记 W）
+hero: {area_frac: 0.30}                          # 只对 hero:table / hero:image 生效
+# ---- 层级（01 Visual Hierarchy / 14 C-01、C-03；数值类先记 W）
 hierarchy:
   max_heroes: 4                                   # 每页 hero:* 0–4 个
   max_ratio: 3.5                                  # 最大字号（title 除外）/ 正文 ≤ 3.5
@@ -508,10 +514,10 @@ images: {viewed_min: 8, reason_min: 8, thumb_max_px: 640, phash_min: 12,
 cards: {min: 2, max: 6}                           # C-10
 image_aspect_tol: 0.02
 text: {para_max_chars: 100, para_max_lines: 4, box_max_chars: 200, source_mult: 1.1}   # source_mult：C-37 正文字数 ≤ 1.1 × source_chars
-# ---- 尺度优先（14 §4 S-01–S-06；2026-09-17 第三轮；bands 2026-09-20 第五轮改）
+# ---- 尺度优先（14 §4 S-01–S-06）
 scale:
   bands:                                          # S-01：按密度档定字号档（只取 type_scale 里的值）
-    light:  {body_min: 18, body_cap: 20}          # 第五轮：密度档只定正文起始值；body_cap 是生成端放大上限，不是校验上限
+    light:  {body_min: 18, body_cap: 20}          # 密度档只定正文起始值；body_cap 是生成端放大上限，不是校验上限
     medium: {body_min: 16, body_cap: 16}
     heavy:  {body_min: 14, body_cap: 14}
   hero_block_h: 0.80                              # S-01：hero:table / hero:image 高度 ≥ 0.8 × body 高（图表不查）
@@ -532,8 +538,6 @@ scale:
   align_max: 3                                    # S-06：左沿 / 右沿各 ≤ 3 个值
   align_tol: 2                                    # S-06：±2pt
 ```
-
-第五轮的变化：删 `hero.font_mult`、`layout.hero_top_frac`、`deck.hero_types_min`、`scale.bands.*.hero_min / hero_max / body_max`；增 `hierarchy`、`title`、`statement`、`agenda`、`region`；`composite.no_hero` 改名 `hierarchy_fail`；`hero_block_h` 只对 table / image 生效。
 
 已删除的阈值：`void_ratio`（C-05）、`spacing`（C-07）、`grid_tol`（C-12）、`spacing_floor`、`fill`（F-01–F-05）、`void_size`（manifest.void）。
 

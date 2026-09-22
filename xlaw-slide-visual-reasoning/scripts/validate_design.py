@@ -4,12 +4,13 @@ validate_design.py — 按 references/14-validation-spec.md 校验 deck
 
     python validate_design.py deck.pptx deck.manifest.yaml [--thresholds thresholds.yaml] [--json _qa/validate.json] [--qa _qa]
     python validate_design.py --list          # 列出全部 C-xx、级别、阈值来源
+    默认只打印失败（M）与警告（W）项；--full 追加打印逐页全部检查结果。validate.json 始终是全量。
 
 流程（§2）：schema → roles → geometry → deck → images → crosscheck → composite。
 每项输出 {page, check, level, message, values}；任一 M 失败 → exit 1；W 只汇总。
 所有数值阈值来自 thresholds.yaml（§8）。§7 里出现、但 §8 未列的一个值（IMAGE_LAYOUT_TOL）以代码常量给出并在 --list 中标明。
 每个检查函数签名统一 (ctx, page) -> list[Finding]，deck 级检查 page=None。
-层级模型（第五轮）：第一层级 = 本页论述对象，可以是一组（hero:* 0–4 个 / 一组 heading / 图表 / 表格 / 时间线），manifest 用 focus 声明；校验同组一致（C-01）与层级完整性（C-03 [W]）。
+层级模型：第一层级 = 本页论述对象，可以是一组（hero:* 0–4 个 / 一组 heading / 图表 / 表格 / 时间线），manifest 用 focus 声明；校验同组一致（C-01）与层级完整性（C-03 [W]）。
 留白模型（尺度优先）：留白不是输入。校验尺度（S-01）、间距 g（S-02）、内容块位置（S-03）、容器贴内容（S-04）、无洞（S-05）、对齐线（S-06）。
 """
 import argparse
@@ -607,7 +608,7 @@ class PageCtx:
             return self._cache['gaps']
         ov = self.th['scale']['overlap']
         tol = self.th['scale']['align_tol']
-        # 第七轮：流程连接箭头（只含 arrow 的元素）放在分栏带 / 行间，是连接件不是内容，不参与间距判定，也不挡相邻关系
+        # 流程连接箭头（只含 arrow 的元素）放在分栏带 / 行间，是连接件不是内容，不参与间距判定，也不挡相邻关系
         us = [u for u in self.units() if not any(self.is_edge_image(x) for x in u['shapes']) and not all(x.role == 'arrow' for x in u['shapes'])]
         # 行：同层、顶沿或垂直中心对齐（±2pt）且横向不重叠的元素。竖向间距在行与行之间量（行高由最高的那格决定）
         col_boxes = [c for c, _ in self.columns()]
@@ -1673,7 +1674,7 @@ def c14_colors(ctx, page):
                     break
             else:
                 cur, cur_para = 0, None
-    # 高亮色克制（01 Color，第六轮）：accent 不铺大面积；一页里 accent 文字不占多数
+    # 高亮色克制（01 Color）：accent 不铺大面积；一页里 accent 文字不占多数
     ac = ctx.th.get('accent', {})
     page_area = ctx.page_w * ctx.page_h
     for s in page.shapes:
@@ -2441,7 +2442,10 @@ def run(pptx_path, manifest_path, th_path, qa_dir, json_out):
             findings.extend(_safe(next(c for c in CHECKS if c['id'] == 'C-40'), ctx, page))
     findings.extend(_safe(next(c for c in CHECKS if c['id'] == 'C-26'), ctx, None))
     pages_summary = {p.idx: {'type': p.type, **p.results} for p in ctx.pages}
-    return finish(findings, json_out, pages=pages_summary)
+    return finish(findings, json_out, pages=pages_summary, full=FULL)
+
+
+FULL = False
 
 
 def _safe(c, ctx, page):
@@ -2452,7 +2456,7 @@ def _safe(c, ctx, page):
         return [F(page.idx if page else None, c['id'], 'M', f'校验器异常：{type(e).__name__}: {e}', trace=traceback.format_exc().splitlines()[-3:])]
 
 
-def finish(findings, json_out, stopped=None, pages=None):
+def finish(findings, json_out, stopped=None, pages=None, full=False):
     m = [f for f in findings if f.level == 'M']
     w = [f for f in findings if f.level == 'W']
     report = {'stopped_at': stopped, 'summary': {'M': len(m), 'W': len(w), 'pass': not m},
@@ -2470,6 +2474,10 @@ def finish(findings, json_out, stopped=None, pages=None):
         for f in by_page[pg]:
             vals = ' '.join(f'{k}={v}' for k, v in f.values.items() if k != 'trace')
             print(f'  [{f.level}] {f.check} {f.message}  {vals}')
+    if full and pages:
+        print('--- 逐页结果（--full）')
+        for idx in sorted(pages):
+            print(f'  page {idx:02d}: ' + json.dumps(pages[idx], ensure_ascii=False, default=str))
     if stopped:
         print(f'\n在 {stopped} 阶段停止')
     print(f'\nM 失败 {len(m)}，W 警告 {len(w)} → {"通过" if not m else "不合格"}')
@@ -2506,7 +2514,10 @@ def main():
     ap.add_argument('--qa', default=None, help='_qa 目录，默认 pptx 同目录下的 _qa')
     ap.add_argument('--json', default=None, help='JSON 输出路径，默认 <qa>/validate.json')
     ap.add_argument('--list', action='store_true')
+    ap.add_argument('--full', action='store_true', help='追加打印逐页全部检查结果（默认只打印 M / W）')
     a = ap.parse_args()
+    global FULL
+    FULL = a.full
     if a.list:
         list_checks(a.thresholds)
         return 0

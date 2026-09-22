@@ -1,8 +1,10 @@
 """
 render_deck.py — 把 deck.pptx 渲染成逐页 PNG，供 13-visual-qa 的感知测试自查
 
-    python render_deck.py --check              # Step 0：检测 soffice，缺失即 exit 1 并打印安装方式
-    python render_deck.py deck.pptx            # 输出 _qa/render/NN.png（NN 从 01 起）
+    python render_deck.py --check              # 前置检查：检测 soffice 与 CJK 字体，缺失即 exit 1 并打印安装方式
+    python render_deck.py deck.pptx            # 输出 _qa/render/NN.png（NN 从 01 起，宽 1280）
+    python render_deck.py deck.pptx --grid 3x2 # 另输出 _qa/render/grid-NN.png：每张 3×2 页的整套拼图（Flip / Silhouette / Anchor 测试用）
+    python render_deck.py deck.pptx --pages 5,12   # 只重渲染这几页（其余 PNG 保留）
     python render_deck.py deck.pptx --width 1920 --out _qa/render
 
 依赖 LibreOffice（soffice）与 PyMuPDF。渲染是运行前提，不允许跳过。
@@ -106,7 +108,31 @@ def check():
     return 0
 
 
-def render(pptx, out_dir='_qa/render', width=1920):
+def _grid(out_dir, pages, cols, rows, width):
+    """把已渲染的单页 PNG 拼成 cols×rows 的整套拼图 grid-NN.png（NN 从 01 起）"""
+    from PIL import Image, ImageDraw
+    per = cols * rows
+    outs = []
+    cell_w = width // cols
+    for gi in range(0, len(pages), per):
+        chunk = pages[gi:gi + per]
+        ims = [Image.open(os.path.join(out_dir, f'{n:02d}.png')).convert('RGB') for n in chunk]
+        cell_h = int(cell_w * ims[0].height / ims[0].width) + 18
+        r = (len(chunk) + cols - 1) // cols
+        sheet = Image.new('RGB', (cols * cell_w, r * cell_h), 'white')
+        draw = ImageDraw.Draw(sheet)
+        for i, (n, im) in enumerate(zip(chunk, ims)):
+            im.thumbnail((cell_w - 6, cell_h - 22))
+            x0, y0 = (i % cols) * cell_w, (i // cols) * cell_h
+            sheet.paste(im, (x0 + 3, y0 + 3))
+            draw.text((x0 + 6, y0 + cell_h - 16), f'p{n:02d}', fill='black')
+        path = os.path.join(out_dir, f'grid-{gi // per + 1:02d}.png')
+        sheet.save(path)
+        outs.append(path)
+    return outs
+
+
+def render(pptx, out_dir='_qa/render', width=1280, pages=None, grid=None):
     import fitz
     soffice = find_soffice()
     if not soffice:
@@ -121,16 +147,25 @@ def render(pptx, out_dir='_qa/render', width=1920):
             print('soffice 转换失败：', r.stdout, r.stderr)
             return 1
         doc = fitz.open(pdf)
-        for old in os.listdir(out_dir):
-            if old.endswith('.png'):
-                os.remove(os.path.join(out_dir, old))
+        if not pages:
+            for old in os.listdir(out_dir):
+                if old.endswith('.png'):
+                    os.remove(os.path.join(out_dir, old))
+        done = []
         for i, page in enumerate(doc, 1):
+            if pages and i not in pages:
+                continue
             zoom = width / page.rect.width
             pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
             path = os.path.join(out_dir, f'{i:02d}.png')
             pix.save(path)
-            print(path, f'{pix.width}x{pix.height}')
-        print(f'{len(doc)} 页 → {out_dir}/')
+            done.append(i)
+        print(f'{len(done)} 页 → {out_dir}/' + ('（只重渲染 ' + ','.join(f'{n:02d}' for n in done) + '）' if pages else ''))
+        if grid:
+            cols, rows = (int(v) for v in grid.lower().split('x'))
+            all_pages = [n for n in range(1, len(doc) + 1) if os.path.exists(os.path.join(out_dir, f'{n:02d}.png'))]
+            outs = _grid(out_dir, all_pages, cols, rows, width * 2)
+            print('整套拼图：' + ', '.join(outs))
     return 0
 
 
@@ -139,10 +174,13 @@ if __name__ == '__main__':
     ap.add_argument('pptx', nargs='?')
     ap.add_argument('--check', action='store_true')
     ap.add_argument('--out', default='_qa/render')
-    ap.add_argument('--width', type=int, default=1920)
+    ap.add_argument('--width', type=int, default=1280)
+    ap.add_argument('--pages', default=None, help='只重渲染这些页：5,12')
+    ap.add_argument('--grid', default=None, help='整套拼图的格数，如 3x2 → grid-NN.png')
     a = ap.parse_args()
     if a.check:
         sys.exit(check())
     if not a.pptx:
         ap.print_help(); sys.exit(2)
-    sys.exit(render(a.pptx, a.out, a.width))
+    pages = [int(v) for v in a.pages.split(',') if v.strip()] if a.pages else None
+    sys.exit(render(a.pptx, a.out, a.width, pages, a.grid))

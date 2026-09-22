@@ -2,7 +2,7 @@
 """
 layout.py — 尺度循环（14 §4c）：由页级 manifest（density、columns、source_chars）与元素树算出字号、g、p 与每个元素的框。
 留白不是输入：内容按密度档放大到位，间距 g 由剩余空间算出，剩下的才是留白。
-第五轮：字号分四层（正文 / 小标题级 / 数字释义 / 大数字，01 字号分级），有余量时的放大顺序是 正文 → 小标题级 → 大数字。
+字号分四层（正文 / 小标题级 / 数字释义 / 大数字，01 字号分级），有余量时的放大顺序是 正文 → 小标题级 → 大数字。
 
     python layout.py page.json [--deck deck.manifest.yaml] [--thresholds thresholds.yaml] [--write-g] > out.json
 
@@ -287,7 +287,7 @@ class Layout:
     def tag_dim(self, tag):
         size = float(tag['size'])
         if tag.get('shape', 'circle') == 'circle':
-            k = float(tag.get('d_em', 1.7))      # 第七轮：序号圆缩小（≈ 1.7 × 字号）+ 数字加粗；大圆 + 小数字不再用
+            k = float(tag.get('d_em', 1.7))      # 序号圆要小（≈ 1.7 × 字号）+ 数字加粗；不用大圆 + 小数字
             d = max(self.ink_of({'kind': 'text', 'text': tag['text'], 'size': size, 'tier': 'fixed'})[1] + max(k - 1.2, 0.5) * size, k * size)
             return d, d
         return self.ink_of({'kind': 'text', 'text': tag['text'], 'size': size, 'tier': 'fixed'})[1] + 2.2 * size, 2.0 * size

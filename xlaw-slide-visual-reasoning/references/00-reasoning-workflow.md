@@ -6,6 +6,7 @@
 
 ### Step 0 前置检查
 
+- 跑 `scripts/check_env.py`（Python 依赖、Node + pptxgenjs、LibreOffice、图库 key、字体一次查完）
 - 检查环境变量里是否有 `PEXELS_API_KEY` / `UNSPLASH_ACCESS_KEY` / `PIXABAY_API_KEY` 之一，并向该 API 发一次测试请求确认网络可达
 - 任一缺失 → 停下来，按 10 的说明请用户授权安装 key，不进入 Step 1
 - 通过 → 记录本次可用的图库来源，进入 Step 1
