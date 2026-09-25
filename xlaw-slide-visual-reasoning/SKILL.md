@@ -50,25 +50,28 @@ python "$SKILL/scripts/check_env.py" --node-dir .
 <deck>/_qa/selected/NN.jpg      选定原图（多图页 NN-1.jpg …）
 <deck>/_qa/contact_sheet.png    全部选中图拼图
 <deck>/_qa/layout/NN.in.json + NN.json   layout.py 输入 / 输出
-<deck>/_qa/build-notes.md       B 段的决定与未解决的 W
+<deck>/_qa/build-notes.md       阶段 B 的决定与未解决的 W
 <deck>/_qa/validate.json        校验全量结果
 <deck>/_qa/render/NN.png + grid-NN.png   渲染图、整套拼图
 <deck>/_qa/review.md            渲染自查结论
 ```
 
-## 流程总览：三段，三个会话
+## 流程总览：一次跑完，三个阶段
 
-一次会话只做一段、只做一套 deck。段与段之间不靠对话记忆，全部状态在文件里；新会话从 B 或 C 接手时只读本段列出的文件。段内上下文接近 150k 时先压缩再继续。
+默认一条提示做完一套 deck：三个阶段按顺序连续执行，上一阶段的结束条件满足就直接进下一阶段，中间不停下来等用户。全部状态写在文件里（`deck.manifest.yaml`、`_qa/`），不依赖对话记忆。
 
-| 段 | 做什么 | 只读这些文件 | 输入 | 产出 | 结束条件 |
+| 阶段 | 做什么 | 本阶段读 | 输入 | 产出 | 结束条件 |
 |---|---|---|---|---|---|
 | A 视觉决策 | Step 1–3 manifest、选图 | `00` `01` `09` `10` `11` + 本 deck 出现的内容类型对应的 `02`–`08` | 内容稿 | `deck.manifest.yaml`、`_qa/selected/`、`_qa/candidates/`、`_qa/contact_sheet.png` | 每页有 manifest；每个图片页 `image` 字段填完整、原图在 `_qa/selected/` |
 | B 生成与校验 | build.js、生成、机器校验到 M = 0 | `00` 角色表、`14` §1–§2、`15`；某条检查失败时再读 `14` 里对应小节 | A 的产出 | `build.js`、`deck.pptx`、`_qa/validate.json`、`_qa/build-notes.md` | `validate_design.py` M = 0 |
 | C 渲染与自查 | 渲染、感知测试（子代理）、改页、交付 | `13` `12`、`_qa/build-notes.md` | B 的产出 | `_qa/review.md`、改后的 `deck.pptx`、交付报告 | review 里没有「不通过」，重校验 M = 0 |
 
-主会话在任何一段都不 Read 图片。看图的工作交给子代理（独立上下文），子代理把结果写进文件，主会话读文件。
+主会话在任何阶段都不 Read 图片。看图的工作交给子代理（独立上下文），子代理把结果写进文件，主会话读文件。
 
-## A 段：视觉决策
+- **上下文管理**：阶段边界是压缩点。进入 B、C 前若上下文接近 150k 先压缩；压缩后只按「本阶段读」列重新读文件，不回看前一阶段的对话。A 阶段读过的 references 在 manifest 写完后不再需要。
+- **断点续跑**：用户中途停下或换会话再来时，按产物判断从哪一阶段继续：有 `deck.manifest.yaml` 且 `_qa/selected/` 齐全 → 从 B 开始；`_qa/validate.json` M = 0 且有 `_qa/build-notes.md` → 从 C 开始。入口与「本阶段读」列相同，不需要前面的对话。
+
+## 阶段 A：视觉决策
 
 入口：内容稿 + 前置检查通过。
 
@@ -89,11 +92,11 @@ python "$SKILL/scripts/check_env.py" --node-dir .
    python "$SKILL/scripts/contact_sheet.py" deck.manifest.yaml --qa _qa
    ```
 
-结束条件：`deck.manifest.yaml` 里每页都有 manifest，每个图片页 `image` 字段完整（含 `candidates_viewed ≥ 8`、`reason`），`_qa/selected/` 与 `_qa/contact_sheet.png` 齐全。
+结束条件：`deck.manifest.yaml` 里每页都有 manifest，每个图片页 `image` 字段完整（含 `candidates_viewed ≥ 8`、`reason`），`_qa/selected/` 与 `_qa/contact_sheet.png` 齐全。满足即直接进入阶段 B。
 
-## B 段：生成与校验
+## 阶段 B：生成与校验
 
-入口：读 `deck.manifest.yaml`、`00` 的角色表、`14` §1–§2、`15`。不读 A 段对话。
+入口：读 `deck.manifest.yaml`、`00` 的角色表、`14` §1–§2、`15`。只依赖这些文件，不需要阶段 A 的对话内容。
 
 1. **写 build.js**，结构与硬规则全部按 `15`：顶部 `SKILL` 路径常量；每页一个 `content(n, fn)` 函数块；每页先把元素树写到 `_qa/layout/NN.in.json`，调 `layout.py` 拿框，再画；每个形状带 `objectName`；图片用 `sizing: cover`；来源写进页备注。
 2. **生成与后处理**（每次改 build.js 之后都要重跑这两条）：
@@ -102,18 +105,18 @@ python "$SKILL/scripts/check_env.py" --node-dir .
    python "$SKILL/scripts/postfix.py" deck.pptx deck.manifest.yaml
    ```
    layout.py 失败的页按 `15` 改列比 / 结构 / 拆页，不加字、不改阈值。
-3. **机器校验**（纯文本，便宜；渲染放到 C 段）：
+3. **机器校验**（纯文本，便宜；渲染放到阶段 C）：
    ```bash
    python "$SKILL/scripts/validate_design.py" deck.pptx deck.manifest.yaml     # 默认只打印 M / W 项；--full 才打逐页全量
    ```
    只读打印出的 M / W 与 `_qa/validate.json` 的 `summary`、`findings`，不整读 json。任一 M → 按 finding 里的声明值与反算值改 manifest 或那一页的函数，回到第 2 步；只在某条检查失败时读 `14` 里对应的 C-xx 小节。W 不改阈值，记入 build-notes。
-4. **写 `_qa/build-notes.md`**：本段做过的结构决定（拆页、改列比、换 pattern）、每条未解决的 W 及原因、C 段需要特别看的页。
+4. **写 `_qa/build-notes.md`**：本阶段做过的结构决定（拆页、改列比、换 pattern）、每条未解决的 W 及原因、阶段 C 需要特别看的页。
 
-结束条件：`validate_design.py` 输出 `M 失败 0`。
+结束条件：`validate_design.py` 输出 `M 失败 0`。满足即直接进入阶段 C。
 
-## C 段：渲染与自查
+## 阶段 C：渲染与自查
 
-入口：读 `_qa/build-notes.md`、`13`、`12`。不读 A / B 段对话，不 Read 图片。
+入口：读 `_qa/build-notes.md`、`13`、`12`。只依赖这些文件，不需要阶段 A / B 的对话内容；不 Read 图片。
 
 1. **渲染**：
    ```bash
@@ -130,29 +133,29 @@ python "$SKILL/scripts/check_env.py" --node-dir .
    再起一个子代理只复核这几页，把 review.md 里对应行改成通过。发现问题不带着交付。
 4. **交付**：`deck.pptx`，附交付报告：`_qa/review.md` 的每页判定行、`validate.json` 的 W 汇总、图片致谢（各页备注里的来源与摄影师；Unsplash 必须署名）。
 
-结束条件：review.md 无「不通过」，最后一次校验 M = 0。
+结束条件：review.md 无「不通过」，最后一次校验 M = 0。满足即交付。
 
 ## 最短完整示例
 
-用户：「把 `brief.md` 做成一套给投资人看的 PPT。」
+用户一条提示：「把 `brief.md` 做成一套给投资人看的 PPT。」下面全部在同一次运行里完成，在 `<deck>/` 下执行。
 
 ```bash
-# 会话 1（A 段）：在 <deck>/ 下
+# 阶段 A
 python "$SKILL/scripts/check_env.py" --node-dir .            # 不通过就按打印的提示让用户补齐，停在这里
+npm i pptxgenjs @phosphor-icons/core                          # 首次
 #   读 00 / 01 / 09 / 10 / 11 与用到的 02–08 → 写 deck.manifest.yaml（deck 段 + pages 段）
 python "$SKILL/scripts/fetch_images.py" search --page 01 --query "city skyline dusk blue tones" --query "office tower glass facade low angle"
 #   … 每个图片页各一次 search；每 3–4 页起一个选图子代理跑 mark --scores / select，回报后填 manifest.image
 python "$SKILL/scripts/contact_sheet.py" deck.manifest.yaml --qa _qa   # 子代理看一次整体
 
-# 会话 2（B 段）
-npm i pptxgenjs @phosphor-icons/core                          # 首次
+# 阶段 B
 #   读 00 角色表 / 14 §1–§2 / 15 → 写 build.js
 node build.js > _qa/build.log 2>&1; grep -E "失败|Error|notes" _qa/build.log
 python "$SKILL/scripts/postfix.py" deck.pptx deck.manifest.yaml
 python "$SKILL/scripts/validate_design.py" deck.pptx deck.manifest.yaml   # 有 M 就改那一页，重跑上两条，直到 M 失败 0
 #   写 _qa/build-notes.md
 
-# 会话 3（C 段）
+# 阶段 C
 python "$SKILL/scripts/render_deck.py" deck.pptx --grid 3x2
 #   自查子代理写 _qa/review.md → 按 fixes 改页 → node build.js、postfix、validate（M = 0）、render --pages <改过的页> → 子代理复核
 ```
@@ -169,3 +172,4 @@ python "$SKILL/scripts/render_deck.py" deck.pptx --grid 3x2
 - 商务 deck 的封面 / 目录不用海岛、沙滩风景，不从品牌名字面联想配图（`09`、`11`）
 - 不自创配图方式：图片只按 `11` 的 1–7 摆，方式 5 / 6 必须满页高贴边
 - 主会话不 Read 图片、不整读 `validate.json`、不整读 `14`
+- 不在阶段之间停下来等用户确认；只有前置检查不通过、图库三轮无合格图、校验 M 反复不能清零时才回报用户

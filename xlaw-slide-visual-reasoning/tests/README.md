@@ -10,7 +10,7 @@
 cd tests/clean
 npm i pptxgenjs @phosphor-icons/core              # 首次（面性 / 双色 icon 来自 Phosphor，scripts/icon.py 栅格化）
 python ../../scripts/check_env.py                 # 需要至少一个图库 key（环境变量或 .env）
-# 候选与选中图已在 _qa/ 下（若缺失，按 SKILL.md A 段的选图流程重新 search / mark / select）
+# 候选与选中图已在 _qa/ 下（若缺失，按 SKILL.md 阶段 A 的选图流程重新 search / mark / select）
 node build.js                                     # 每页调用 scripts/layout.py 算框，输入 / 输出在 _qa/layout/NN.in.json、NN.json
 python ../../scripts/postfix.py deck.pptx deck.manifest.yaml              # 英文字体（a:latin）+ bullet 135% accent + 清多余 pPr；每次 build 后必跑
 python ../../scripts/validate_design.py deck.pptx deck.manifest.yaml     # 期望：M 0 / W 0

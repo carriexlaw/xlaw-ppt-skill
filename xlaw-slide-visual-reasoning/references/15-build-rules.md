@@ -1,6 +1,6 @@
 ## 15-build-rules.md
 
-生成端（`build.js`，pptxgenjs）的硬规则。SKILL.md 的 B 段只做编排，规则以本文件为准；角色表见 00，schema 见 14 §1，尺度循环见 14 §4c。
+生成端（`build.js`，pptxgenjs）的硬规则。SKILL.md 的阶段 B 只做编排，规则以本文件为准；角色表见 00，schema 见 14 §1，尺度循环见 14 §4c。
 
 ### build.js 的结构
 
